@@ -16,6 +16,12 @@ export default function BookmarkBar(props) {
   const [searchQuery, setSearchQuery] = createSignal('');
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
   
+  // Drag-to-scroll state
+  let scrollContainer;
+  const [isDragging, setIsDragging] = createSignal(false);
+  const [startX, setStartX] = createSignal(0);
+  const [scrollLeft, setScrollLeft] = createSignal(0);
+  
   onMount(() => {
     // Check configuration on mount (client-side only)
     // Add a small delay to ensure localStorage is fully accessible in iframe context
@@ -334,6 +340,38 @@ export default function BookmarkBar(props) {
     window.location.reload();
   };
   
+  // Drag-to-scroll handlers
+  const handleMouseDown = (e) => {
+    if (!scrollContainer) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainer.offsetLeft);
+    setScrollLeft(scrollContainer.scrollLeft);
+    scrollContainer.style.cursor = 'grabbing';
+    scrollContainer.style.userSelect = 'none';
+  };
+  
+  const handleMouseLeave = () => {
+    if (!scrollContainer) return;
+    setIsDragging(false);
+    scrollContainer.style.cursor = 'grab';
+    scrollContainer.style.userSelect = 'auto';
+  };
+  
+  const handleMouseUp = () => {
+    if (!scrollContainer) return;
+    setIsDragging(false);
+    scrollContainer.style.cursor = 'grab';
+    scrollContainer.style.userSelect = 'auto';
+  };
+  
+  const handleMouseMove = (e) => {
+    if (!isDragging() || !scrollContainer) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainer.offsetLeft;
+    const walk = (x - startX()) * 2; // Multiply by 2 for faster scrolling
+    scrollContainer.scrollLeft = scrollLeft() - walk;
+  };
+  
   return (
     <div class="flex items-center h-full bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] px-2 gap-2">
       <Show when={loading()}>
@@ -422,7 +460,15 @@ export default function BookmarkBar(props) {
         <div class="w-px h-6 bg-[var(--color-border)]"></div>
         
         {/* Scrollable bookmarks */}
-        <div class="flex-1 overflow-x-auto overflow-y-hidden flex items-center gap-1">
+        <div 
+          ref={scrollContainer}
+          class="flex-1 overflow-x-auto overflow-y-hidden flex items-center gap-1 scrollbar-thin"
+          style="cursor: grab;"
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        >
           <For each={displayBookmarks()}>
             {(item, index) => (
               <BookmarkItem
