@@ -2,6 +2,7 @@
 import { createSignal, Show, For, onMount } from 'solid-js';
 import { getGithubToken, getGistId } from '../utils/storage';
 import { parseYaml, stringifyYaml, deleteBookmarkAtPath } from '../utils/yaml';
+import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarksFullPage() {
   const [bookmarks, setBookmarks] = createSignal({ bookmarks: [] });
@@ -563,9 +564,15 @@ export default function BookmarksFullPage() {
                 {(bookmark, index) => (
                   <div class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-shadow">
                     <div class="flex items-start justify-between mb-2">
-                      <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
+                      <FaviconImage 
+                        url={bookmark.url}
+                        class="w-5 h-5 flex-shrink-0"
+                        fallbackIcon={
+                          <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                        }
+                      />
                       <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleEdit(bookmark, index(), false)}
@@ -591,7 +598,9 @@ export default function BookmarksFullPage() {
                       href={bookmark.url}
                       class="block"
                     >
-                      <h3 class="font-medium text-[var(--color-text-primary)] mb-1 line-clamp-2">{bookmark.name}</h3>
+                      <div class="flex items-start gap-2 mb-1">
+                        <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{bookmark.name}</h3>
+                      </div>
                       <p class="text-xs text-[var(--color-text-secondary)] truncate">{bookmark.url}</p>
                     </a>
                   </div>

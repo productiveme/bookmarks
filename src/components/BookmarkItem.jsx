@@ -1,5 +1,6 @@
 // BookmarkItem - Individual bookmark or folder
 import { Show, createSignal } from 'solid-js';
+import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkItem(props) {
   const [isEditing, setIsEditing] = createSignal(false);
@@ -145,9 +146,15 @@ export default function BookmarkItem(props) {
           title={props.item.type === 'link' ? props.item.url : `Open ${props.item.name}`}
         >
           <Show when={props.item.type === 'folder'} fallback={
-            <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
+            <FaviconImage 
+              url={props.item.url}
+              class="w-3.5 h-3.5"
+              fallbackIcon={
+                <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              }
+            />
           }>
             <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
