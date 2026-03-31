@@ -253,6 +253,16 @@ export default function BookmarksFullPage() {
     }
   };
 
+  const handleFolderTileClick = (folder, index) => {
+    if (searchQuery().trim()) {
+      // When searching, find the folder path and navigate to it
+      handleSearchFolderClick(folder);
+    } else {
+      // When browsing normally, navigate to the folder directly
+      navigateToFolder(folder, index);
+    }
+  };
+
   const displayBookmarks = () => {
     if (searchQuery().trim()) {
       return filteredBookmarks();
@@ -264,7 +274,8 @@ export default function BookmarksFullPage() {
     if (searchQuery().trim()) {
       return filteredFolders();
     }
-    return [];
+    // Show current folders as tiles when not searching
+    return folders();
   };
 
   const handleAddFolder = async () => {
@@ -538,11 +549,11 @@ export default function BookmarksFullPage() {
             </Show>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {/* Folder tiles (shown only in search results) */}
+              {/* Folder tiles */}
               <For each={displayFolders()}>
-                {(folder) => (
+                {(folder, index) => (
                   <button
-                    onClick={() => handleSearchFolderClick(folder)}
+                    onClick={() => handleFolderTileClick(folder, index())}
                     class="group bg-[var(--color-bg-primary)] border-2 border-[var(--color-accent)] border-dashed rounded-lg p-4 hover:shadow-lg transition-shadow text-left"
                   >
                     <div class="flex items-start justify-between mb-2">
