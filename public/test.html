@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmarks Bar Test Page</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bookmarks Bar Test Page</h1>
+    
+    <div class="info">
+        <p>Click the button below to inject the bookmarks bar into this page.</p>
+        <p>The bar should appear at the top of the page, pushing this content down.</p>
+    </div>
+    
+    <button onclick="injectBar()">Inject Bookmarks Bar</button>
+    
+    <div class="info">
+        <h2>Expected Behavior:</h2>
+        <ul>
+            <li>Bar appears at top (40px height)</li>
+            <li>If not configured: Shows "Please configure" message with link</li>
+            <li>If configured: Shows breadcrumbs and bookmarks</li>
+            <li>Clicking "Setup" opens configuration in new tab</li>
+        </ul>
+    </div>
+    
+    <script>
+        function injectBar() {
+            if (window.bookmarksBar) {
+                window.bookmarksBar.toggle();
+                return;
+            }
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = 'http://localhost:4322/bar';
+            iframe.id = 'bookmarks-bar-iframe';
+            iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:40px;border:none;z-index:2147483647;box-shadow:0 2px 4px rgba(0,0,0,0.1)';
+            
+            document.body.style.marginTop = '40px';
+            document.body.prepend(iframe);
+            
+            // Message handler
+            window.addEventListener('message', (event) => {
+                console.log('Parent received message:', event.data);
+                if (event.origin !== 'http://localhost:4322') return;
+                
+                if (event.data.type === 'request-page-info') {
+                    console.log('Sending page info to iframe');
+                    iframe.contentWindow.postMessage({
+                        type: 'page-info',
+                        title: document.title,
+                        url: window.location.href
+                    }, 'http://localhost:4322');
+                }
+                
+                if (event.data.type === 'close-bar') {
+                    console.log('Closing bookmarks bar');
+                    window.bookmarksBar.hide();
+                }
+            });
+            
+            window.bookmarksBar = {
+                toggle: function() {
+                    const visible = iframe.style.display !== 'none';
+                    iframe.style.display = visible ? 'none' : 'block';
+                    document.body.style.marginTop = visible ? '0' : '40px';
+                }
+            };
+            
+            console.log('Bookmarks bar injected!');
+        }
+    </script>
+</body>
+</html>

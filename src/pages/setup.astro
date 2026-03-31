@@ -1,0 +1,9 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ConfigModal from '../components/ConfigModal.jsx';
+import '../styles/global.css';
+---
+
+<Layout title="Bookmarks Bar - Setup">
+  <ConfigModal client:only="solid-js" />
+</Layout>

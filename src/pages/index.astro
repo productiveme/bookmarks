@@ -1,0 +1,90 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { generateBookmarklet } from '../utils/bookmarklet.js';
+import '../styles/global.css';
+
+const appUrl = import.meta.env.PUBLIC_APP_URL || 'http://localhost:4321';
+const bookmarkletCode = generateBookmarklet(appUrl);
+---
+
+<Layout title="Bookmarks Bar - Setup">
+  <main class="min-h-screen bg-[var(--color-bg-secondary)] flex items-center justify-center p-8">
+    <div class="max-w-3xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4 text-[var(--color-text-primary)]">
+        Bookmarks Bar
+      </h1>
+      <p class="text-lg text-[var(--color-text-secondary)] mb-8">
+        A minimal bookmark manager that lives in your browser, powered by GitHub Gist
+      </p>
+      
+      <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl p-8 mb-8 border border-[var(--color-border)] text-left">
+        <h2 class="text-2xl font-semibold mb-4 text-[var(--color-text-primary)]">
+          Getting Started
+        </h2>
+        
+        <ol class="space-y-4 text-[var(--color-text-primary)]">
+          <li class="flex gap-3">
+            <span class="font-bold text-[var(--color-accent)]">1.</span>
+            <div>
+              <strong>Create a GitHub Personal Access Token</strong>
+              <p class="text-sm text-[var(--color-text-secondary)] mt-1">
+                Go to <a href="https://github.com/settings/tokens" target="_blank" class="text-[var(--color-accent)] hover:underline">github.com/settings/tokens</a> and create a token with <code class="bg-[var(--color-bg-secondary)] px-1 py-0.5 rounded">gist</code> scope
+              </p>
+            </div>
+          </li>
+          
+          <li class="flex gap-3">
+            <span class="font-bold text-[var(--color-accent)]">2.</span>
+            <div>
+              <strong>Configure your bookmarks</strong>
+              <p class="text-sm text-[var(--color-text-secondary)] mt-1">
+                <a href="/setup" target="_blank" class="text-[var(--color-accent)] hover:underline">Click here to set up</a> your GitHub token and create a new Gist
+              </p>
+            </div>
+          </li>
+          
+          <li class="flex gap-3">
+            <span class="font-bold text-[var(--color-accent)]">3.</span>
+            <div>
+              <strong>Install the Bookmarklet</strong>
+              <p class="text-sm text-[var(--color-text-secondary)] mt-1">
+                Drag this button to your bookmarks bar:
+              </p>
+              <a
+                href={bookmarkletCode}
+                class="inline-block mt-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors no-underline"
+                onclick="alert('Drag this button to your bookmarks bar!'); return false;"
+              >
+                📚 Bookmarks Bar
+              </a>
+            </div>
+          </li>
+          
+          <li class="flex gap-3">
+            <span class="font-bold text-[var(--color-accent)]">4.</span>
+            <div>
+              <strong>Use it anywhere</strong>
+              <p class="text-sm text-[var(--color-text-secondary)] mt-1">
+                Click the bookmarklet on any webpage to show your bookmarks bar
+              </p>
+            </div>
+          </li>
+        </ol>
+      </div>
+      
+      <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl p-6 border border-[var(--color-border)] text-left">
+        <h3 class="text-xl font-semibold mb-3 text-[var(--color-text-primary)]">
+          Features
+        </h3>
+        <ul class="space-y-2 text-[var(--color-text-secondary)]">
+          <li>✓ Organize bookmarks in folders and subfolders</li>
+          <li>✓ Quick access from any webpage</li>
+          <li>✓ Add current page with one click</li>
+          <li>✓ Synced via GitHub Gist</li>
+          <li>✓ Light/Dark theme support</li>
+          <li>✓ Privacy-focused (your data stays in your Gist)</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</Layout>

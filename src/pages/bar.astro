@@ -1,0 +1,60 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BookmarkBar from '../components/BookmarkBar.jsx';
+import '../styles/global.css';
+---
+
+<Layout title="Bookmarks Bar">
+  <div style="height: 40px;">
+    <BookmarkBar client:only="solid-js" />
+  </div>
+  
+  <script>
+    // Handle messages from bookmarklet (to get current page info)
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'get-page-info') {
+        // This will be called by the bar to get current page details
+        window.parent.postMessage({
+          type: 'page-info-response',
+          title: event.data.title,
+          url: event.data.url
+        }, '*');
+      }
+      
+      // Reload when config is saved
+      if (event.data.type === 'config-saved') {
+        window.location.reload();
+      }
+    });
+    
+    // Provide function to get current page info from parent
+    if (typeof window !== 'undefined') {
+      window.getCurrentPageInfo = () => {
+        return new Promise((resolve) => {
+          console.log('getCurrentPageInfo called');
+          const handler = (event) => {
+            console.log('Received message:', event.data);
+            if (event.data.type === 'page-info') {
+              window.removeEventListener('message', handler);
+              console.log('Got page info:', event.data);
+              resolve({ title: event.data.title, url: event.data.url });
+            }
+          };
+          
+          window.addEventListener('message', handler);
+          
+          // Request page info from parent
+          console.log('Requesting page info from parent');
+          window.parent.postMessage({ type: 'request-page-info' }, '*');
+          
+          // Timeout after 2 seconds
+          setTimeout(() => {
+            console.log('getCurrentPageInfo timeout');
+            window.removeEventListener('message', handler);
+            resolve(null);
+          }, 2000);
+        });
+      };
+    }
+  </script>
+</Layout>
