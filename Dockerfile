@@ -1,6 +1,10 @@
 # Build stage
 FROM node:22-alpine AS builder
 
+# Accept build argument for the public URL
+ARG PUBLIC_APP_URL=http://localhost:4321
+ENV PUBLIC_APP_URL=${PUBLIC_APP_URL}
+
 WORKDIR /app
 
 # Copy package files
