@@ -16,9 +16,12 @@ export default function BookmarksFullPage() {
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
   const [filteredFolders, setFilteredFolders] = createSignal([]);
   const [showEditModal, setShowEditModal] = createSignal(false);
+  const [showAddModal, setShowAddModal] = createSignal(false);
   const [editingItem, setEditingItem] = createSignal(null);
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
+  const [addName, setAddName] = createSignal('');
+  const [addUrl, setAddUrl] = createSignal('');
 
   onMount(() => {
     const token = getGithubToken();
@@ -31,6 +34,23 @@ export default function BookmarksFullPage() {
       loadBookmarks();
     } else {
       setLoading(false);
+    }
+
+    // Check if we came from a CSP-blocked page with page info
+    const params = new URLSearchParams(window.location.search);
+    const fromPage = params.get('fromPage');
+    const pageTitle = params.get('title');
+    const pageUrl = params.get('url');
+
+    if (fromPage === '1' && pageTitle && pageUrl && isConfigured) {
+      // Show add bookmark modal with pre-filled data
+      setAddName(decodeURIComponent(pageTitle));
+      setAddUrl(decodeURIComponent(pageUrl));
+      setShowAddModal(true);
+
+      // Clean up URL parameters (remove them from address bar)
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, '', cleanUrl);
     }
   });
 
