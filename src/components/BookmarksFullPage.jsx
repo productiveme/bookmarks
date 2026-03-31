@@ -219,6 +219,89 @@ export default function BookmarksFullPage() {
     return currentBookmarks();
   };
 
+  const handleAddFolder = async () => {
+    const name = prompt('Enter folder name:');
+    if (!name || !name.trim()) return;
+
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      let current = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      if (!Array.isArray(current)) {
+        current = [];
+      }
+      
+      current.push({
+        type: 'folder',
+        name: name.trim(),
+        children: []
+      });
+      
+      setBookmarks(data);
+      
+      // Update current view
+      let viewCurrent = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        const folder = viewCurrent[pathItem.index];
+        if (folder && folder.type === 'folder') {
+          viewCurrent = folder.children || [];
+        }
+      }
+      updateCurrentView(viewCurrent, currentPath());
+      
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error adding folder: ' + err.message);
+    }
+  };
+
+  const handleAddBookmark = async () => {
+    const name = prompt('Enter bookmark name:');
+    if (!name || !name.trim()) return;
+    
+    const url = prompt('Enter URL:');
+    if (!url || !url.trim()) return;
+
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      let current = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      if (!Array.isArray(current)) {
+        current = [];
+      }
+      
+      current.push({
+        type: 'link',
+        name: name.trim(),
+        url: url.trim()
+      });
+      
+      setBookmarks(data);
+      
+      // Update current view
+      let viewCurrent = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        const folder = viewCurrent[pathItem.index];
+        if (folder && folder.type === 'folder') {
+          viewCurrent = folder.children || [];
+        }
+      }
+      updateCurrentView(viewCurrent, currentPath());
+      
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error adding bookmark: ' + err.message);
+    }
+  };
+
   return (
     <div class="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
       {/* Header */}
@@ -309,7 +392,18 @@ export default function BookmarksFullPage() {
         <Show when={!loading() && !error() && configured()}>
           {/* Sidebar - Folders */}
           <div class="w-64 bg-[var(--color-bg-primary)] border-r border-[var(--color-border)] p-4 overflow-y-auto">
-            <h2 class="text-sm font-semibold text-[var(--color-text-secondary)] uppercase mb-3">Folders</h2>
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-sm font-semibold text-[var(--color-text-secondary)] uppercase">Folders</h2>
+              <button
+                onClick={handleAddFolder}
+                class="p-1.5 text-[var(--color-accent)] hover:bg-[var(--color-bg-hover)] rounded transition-colors"
+                title="Add Folder"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+            </div>
             
             <Show when={folders().length === 0}>
               <p class="text-sm text-[var(--color-text-secondary)] italic">No folders</p>
@@ -384,6 +478,23 @@ export default function BookmarksFullPage() {
 
           {/* Main Area - Bookmarks Grid */}
           <div class="flex-1 p-6 overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">
+                {searchQuery().trim() ? 'Search Results' : 'Bookmarks'}
+              </h2>
+              <Show when={!searchQuery().trim()}>
+                <button
+                  onClick={handleAddBookmark}
+                  class="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Add Bookmark</span>
+                </button>
+              </Show>
+            </div>
+            
             <Show when={displayBookmarks().length === 0}>
               <div class="text-center py-12">
                 <p class="text-[var(--color-text-secondary)]">
@@ -426,7 +537,6 @@ export default function BookmarksFullPage() {
                         </div>
                         <a
                           href={bookmark.url}
-                          target="_blank"
                           class="block"
                         >
                           <h3 class="font-medium text-[var(--color-text-primary)] mb-1 line-clamp-2">{bookmark.name}</h3>
