@@ -1,73 +1,89 @@
-// FaviconImage - Displays favicon for a URL with fallback to icon
+// FaviconImage - Displays favicon for a URL with background discovery
 import { createSignal, onMount, Show } from 'solid-js';
+
+// In-memory cache for favicon URLs (shared across all component instances)
+// TODO: Replace with Redis cache in the future for persistence
+const faviconCache = new Map();
+
+async function discoverFavicon(url) {
+  try {
+    const parsedUrl = new URL(url);
+    const domain = parsedUrl.hostname;
+    const origin = parsedUrl.origin;
+    
+    // Check cache first
+    if (faviconCache.has(domain)) {
+      return faviconCache.get(domain);
+    }
+    
+    // List of favicon sources to try (in order of preference)
+    const faviconSources = [
+      `${origin}/favicon.ico`,
+      `${origin}/favicon.png`,
+      `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+    ];
+    
+    // Try each source by attempting to load as image
+    for (const faviconUrl of faviconSources) {
+      try {
+        // Create a promise that resolves when image loads or rejects on error
+        const canLoad = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => reject(false);
+          // Set a timeout to avoid hanging
+          setTimeout(() => reject(false), 3000);
+          img.src = faviconUrl;
+        });
+        
+        if (canLoad) {
+          // Cache the successful URL
+          faviconCache.set(domain, faviconUrl);
+          return faviconUrl;
+        }
+      } catch (err) {
+        // Try next source
+        continue;
+      }
+    }
+    
+    // If all fail, use the last one (Google) as fallback
+    const fallbackUrl = faviconSources[faviconSources.length - 1];
+    faviconCache.set(domain, fallbackUrl);
+    return fallbackUrl;
+    
+  } catch (err) {
+    return null;
+  }
+}
 
 export default function FaviconImage(props) {
   const [faviconUrl, setFaviconUrl] = createSignal(null);
-  const [error, setError] = createSignal(false);
-  const [attempts, setAttempts] = createSignal(0);
 
-  onMount(() => {
-    if (!props.url) return;
-
-    try {
-      const url = new URL(props.url);
-      const domain = url.hostname;
-      const origin = url.origin;
-      
-      // Try multiple favicon sources in order
-      const faviconSources = [
-        // Try the actual site's favicon first (most accurate)
-        `${origin}/favicon.ico`,
-        // Try the site's root for favicon
-        `${origin}/favicon.png`,
-        // Try DuckDuckGo's favicon service (good quality, privacy-friendly)
-        `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-        // Fallback to Google (reliable but sometimes generic)
-        `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
-      ];
-      
-      setFaviconUrl(faviconSources[0]);
-      setAttempts(0);
-    } catch (err) {
-      setError(true);
-    }
-  });
-
-  const handleError = () => {
-    const url = props.url;
-    if (!url) {
-      setError(true);
+  onMount(async () => {
+    if (!props.url) {
       return;
     }
 
-    try {
-      const parsedUrl = new URL(url);
-      const domain = parsedUrl.hostname;
-      const origin = parsedUrl.origin;
-      
-      const faviconSources = [
-        `${origin}/favicon.ico`,
-        `${origin}/favicon.png`,
-        `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-        `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
-      ];
-      
-      const nextAttempt = attempts() + 1;
-      
-      if (nextAttempt < faviconSources.length) {
-        setAttempts(nextAttempt);
-        setFaviconUrl(faviconSources[nextAttempt]);
-      } else {
-        setError(true);
+    // Start discovery in background (non-blocking)
+    discoverFavicon(props.url).then(discoveredUrl => {
+      if (discoveredUrl) {
+        setFaviconUrl(discoveredUrl);
       }
-    } catch (err) {
-      setError(true);
-    }
+    }).catch(() => {
+      // Silently fail - will show fallback icon
+    });
+  });
+
+  const handleError = () => {
+    // If image fails to load, fall back to icon
+    setFaviconUrl(null);
   };
 
   return (
     <Show
-      when={!error() && faviconUrl()}
+      when={faviconUrl()}
       fallback={props.fallbackIcon || null}
     >
       <img
@@ -75,6 +91,7 @@ export default function FaviconImage(props) {
         alt=""
         class={props.class || "w-4 h-4"}
         onError={handleError}
+        loading="lazy"
       />
     </Show>
   );
