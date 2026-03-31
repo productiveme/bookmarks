@@ -1,8 +1,13 @@
 // BookmarksFullPage - Bookmarks Manager with sidebar and tile grid
 import { createSignal, Show, For, onMount } from 'solid-js';
-import { getGithubToken, getGistId } from '../utils/storage';
-import { parseYaml, stringifyYaml, deleteBookmarkAtPath } from '../utils/yaml';
-import FaviconImage from './FaviconImage.jsx';
+import { getGithubToken, getGistId } from '../utils/storage.js';
+import { parseYaml, stringifyYaml, deleteBookmarkAtPath } from '../utils/yaml.js';
+import BookmarksHeader from './BookmarksHeader.jsx';
+import BookmarksSidebar from './BookmarksSidebar.jsx';
+import BookmarkTile from './BookmarkTile.jsx';
+import FolderTile from './FolderTile.jsx';
+import EditModal from './EditModal.jsx';
+import AddBookmarkModal from './AddBookmarkModal.jsx';
 
 export default function BookmarksFullPage() {
   const [bookmarks, setBookmarks] = createSignal({ bookmarks: [] });
@@ -18,10 +23,10 @@ export default function BookmarksFullPage() {
   const [showEditModal, setShowEditModal] = createSignal(false);
   const [showAddModal, setShowAddModal] = createSignal(false);
   const [editingItem, setEditingItem] = createSignal(null);
-  const [editName, setEditName] = createSignal('');
-  const [editUrl, setEditUrl] = createSignal('');
   const [addName, setAddName] = createSignal('');
   const [addUrl, setAddUrl] = createSignal('');
+  const [prefilledName, setPrefilledName] = createSignal('');
+  const [prefilledUrl, setPrefilledUrl] = createSignal('');
 
   onMount(() => {
     const token = getGithubToken();
@@ -43,10 +48,9 @@ export default function BookmarksFullPage() {
     const pageUrl = params.get('url');
 
     if (fromPage === '1' && pageTitle && pageUrl && isConfigured) {
-      // Show add bookmark modal with pre-filled data
-      setAddName(decodeURIComponent(pageTitle));
-      setAddUrl(decodeURIComponent(pageUrl));
-      setShowAddModal(true);
+      // Store pre-filled data but don't show modal yet (user might want to navigate to a folder first)
+      setPrefilledName(decodeURIComponent(pageTitle));
+      setPrefilledUrl(decodeURIComponent(pageUrl));
 
       // Clean up URL parameters (remove them from address bar)
       const cleanUrl = window.location.pathname;
@@ -164,12 +168,10 @@ export default function BookmarksFullPage() {
 
   const handleEdit = (item, index, isFolder) => {
     setEditingItem({ item, index, isFolder });
-    setEditName(item.name);
-    setEditUrl(item.url || '');
     setShowEditModal(true);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = async (editedData) => {
     try {
       const { item, index, isFolder } = editingItem();
       const allItems = [...folders(), ...currentBookmarks()];
@@ -185,8 +187,8 @@ export default function BookmarksFullPage() {
       
       current[path[path.length - 1]] = {
         ...item,
-        name: editName(),
-        ...(item.type === 'link' ? { url: editUrl() } : {})
+        name: editedData.name,
+        ...(item.type === 'link' ? { url: editedData.url } : {})
       };
       
       setBookmarks(data);
@@ -339,18 +341,23 @@ export default function BookmarksFullPage() {
   };
 
   const handleAddBookmark = () => {
-    // Clear any previous values and show modal
-    setAddName('');
-    setAddUrl('');
+    // Check if we have pre-filled values from CSP fallback
+    if (prefilledName() || prefilledUrl()) {
+      // Use pre-filled values on first click
+      setAddName(prefilledName());
+      setAddUrl(prefilledUrl());
+      // Clear pre-filled values so next time starts fresh
+      setPrefilledName('');
+      setPrefilledUrl('');
+    } else {
+      // Clear any previous values and show modal
+      setAddName('');
+      setAddUrl('');
+    }
     setShowAddModal(true);
   };
 
-  const handleSaveAdd = async () => {
-    if (!addName().trim() || !addUrl().trim()) {
-      alert('Please enter both name and URL');
-      return;
-    }
-
+  const handleSaveAdd = async (addData) => {
     try {
       const data = JSON.parse(JSON.stringify(bookmarks()));
       
@@ -365,8 +372,8 @@ export default function BookmarksFullPage() {
       
       current.push({
         type: 'link',
-        name: addName().trim(),
-        url: addUrl().trim()
+        name: addData.name,
+        url: addData.url
       });
       
       setBookmarks(data);
@@ -387,6 +394,9 @@ export default function BookmarksFullPage() {
       setShowAddModal(false);
       setAddName('');
       setAddUrl('');
+      // Also clear any remaining pre-filled values
+      setPrefilledName('');
+      setPrefilledUrl('');
     } catch (err) {
       alert('Error adding bookmark: ' + err.message);
     }
@@ -396,83 +406,24 @@ export default function BookmarksFullPage() {
     setShowAddModal(false);
     setAddName('');
     setAddUrl('');
+    // Also clear any remaining pre-filled values
+    setPrefilledName('');
+    setPrefilledUrl('');
   };
 
   return (
     <div class="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
       {/* Header */}
-      <div class="bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] p-4">
-        <div class="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>
-            <Show when={!loading() && !configured()}>
-              <a href="/setup" target="_blank" class="text-sm text-[var(--color-accent)] hover:underline">
-                Setup Required
-              </a>
-            </Show>
-          </div>
-          
-          <Show when={!loading() && configured()}>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-              <div class="relative flex-1 sm:flex-none">
-                <input
-                  type="text"
-                  value={searchQuery()}
-                  onInput={handleSearchInput}
-                  placeholder="Search bookmarks and folders..."
-                  class="px-4 py-2 pr-10 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-full sm:w-64"
-                />
-                <Show when={searchQuery().trim()}>
-                  <button
-                    onClick={handleClearSearch}
-                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-                    title="Clear search"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </Show>
-              </div>
-              <button
-                onClick={() => loadBookmarks()}
-                class="px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-                title="Refresh from Gist"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </button>
-            </div>
-          </Show>
-        </div>
-        
-        {/* Breadcrumbs */}
-        <Show when={!loading() && configured()}>
-          <div class="max-w-[1920px] mx-auto mt-3 flex items-center gap-2 text-sm flex-wrap">
-            <button
-              class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors whitespace-nowrap"
-              onClick={() => navigateToBreadcrumb(-1)}
-            >
-              Home
-            </button>
-            <For each={currentPath()}>
-              {(pathItem, i) => (
-                <>
-                  <span class="text-[var(--color-text-secondary)]">/</span>
-                  <button
-                    class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors truncate max-w-[150px] sm:max-w-none"
-                    onClick={() => navigateToBreadcrumb(i())}
-                    title={pathItem.name}
-                  >
-                    {pathItem.name}
-                  </button>
-                </>
-              )}
-            </For>
-          </div>
-        </Show>
-      </div>
+      <BookmarksHeader
+        loading={loading()}
+        configured={configured()}
+        searchQuery={searchQuery()}
+        currentPath={currentPath()}
+        onSearchInput={handleSearchInput}
+        onClearSearch={handleClearSearch}
+        onRefresh={loadBookmarks}
+        onNavigateToBreadcrumb={navigateToBreadcrumb}
+      />
 
       {/* Main Content */}
       <div class="flex-1 flex max-w-[1920px] mx-auto w-full">
@@ -501,62 +452,13 @@ export default function BookmarksFullPage() {
 
         <Show when={!loading() && !error() && configured()}>
           {/* Sidebar - Folders (hidden on mobile) */}
-          <div class="hidden md:block w-64 bg-[var(--color-bg-primary)] border-r border-[var(--color-border)] p-4 overflow-y-auto">
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="text-sm font-semibold text-[var(--color-text-secondary)] uppercase">Folders</h2>
-              <button
-                onClick={handleAddFolder}
-                class="p-1.5 text-[var(--color-accent)] hover:bg-[var(--color-bg-hover)] rounded transition-colors"
-                title="Add Folder"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-            </div>
-            
-            <Show when={folders().length === 0}>
-              <p class="text-sm text-[var(--color-text-secondary)] italic">No folders</p>
-            </Show>
-            
-            <div class="space-y-1">
-              <For each={folders()}>
-                {(folder, index) => (
-                  <div class="group flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
-                    <button
-                      class="flex-1 flex items-center gap-2 text-left"
-                      onClick={() => navigateToFolder(folder, index())}
-                    >
-                      <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                      </svg>
-                      <span class="text-[var(--color-text-primary)]">{folder.name}</span>
-                    </button>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleEdit(folder, index(), true)}
-                        class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-                        title="Edit"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(index(), true)}
-                        class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-                        title="Delete"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </For>
-            </div>
-          </div>
+          <BookmarksSidebar
+            folders={folders()}
+            onAddFolder={handleAddFolder}
+            onNavigateToFolder={navigateToFolder}
+            onEdit={handleEdit}
+            onDelete={(index) => handleDelete(index, true)}
+          />
 
           {/* Main Area - Bookmarks Grid */}
           <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
@@ -589,69 +491,21 @@ export default function BookmarksFullPage() {
               {/* Folder tiles */}
               <For each={displayFolders()}>
                 {(folder, index) => (
-                  <button
+                  <FolderTile
+                    folder={folder}
                     onClick={() => handleFolderTileClick(folder, index())}
-                    class="group bg-[var(--color-bg-primary)] border-2 border-[var(--color-accent)] border-dashed rounded-lg p-4 hover:shadow-lg transition-shadow text-left"
-                  >
-                    <div class="flex items-start justify-between mb-2">
-                      <svg class="w-5 h-5 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                      </svg>
-                      <svg class="w-4 h-4 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                    <h3 class="font-medium text-[var(--color-text-primary)] mb-1 line-clamp-2">{folder.name}</h3>
-                    <p class="text-xs text-[var(--color-text-secondary)]">Folder • Click to open</p>
-                  </button>
+                  />
                 )}
               </For>
               
               {/* Bookmark tiles */}
               <For each={displayBookmarks()}>
                 {(bookmark, index) => (
-                  <div class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-shadow">
-                    <div class="flex items-start justify-between mb-2">
-                      <FaviconImage 
-                        url={bookmark.url}
-                        class="w-5 h-5 flex-shrink-0"
-                        fallbackIcon={
-                          <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                        }
-                      />
-                      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleEdit(bookmark, index(), false)}
-                          class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-                          title="Edit"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(index(), false)}
-                          class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-                          title="Delete"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <a
-                      href={bookmark.url}
-                      class="block"
-                    >
-                      <div class="flex items-start gap-2 mb-1">
-                        <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{bookmark.name}</h3>
-                      </div>
-                      <p class="text-xs text-[var(--color-text-secondary)] truncate">{bookmark.url}</p>
-                    </a>
-                  </div>
+                  <BookmarkTile
+                    bookmark={bookmark}
+                    onEdit={() => handleEdit(bookmark, index(), false)}
+                    onDelete={() => handleDelete(index(), false)}
+                  />
                 )}
               </For>
             </div>
@@ -660,116 +514,24 @@ export default function BookmarksFullPage() {
       </div>
 
       {/* Edit Modal */}
-      <Show when={showEditModal()}>
-        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleCancelEdit}>
-          <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
-              {editingItem() && editingItem().isFolder ? 'Edit Folder' : 'Edit Bookmark'}
-            </h2>
-            
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={editName()}
-                  onInput={(e) => setEditName(e.target.value)}
-                  placeholder="Name"
-                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  autofocus
-                />
-              </div>
-              
-              <Show when={editingItem() && !editingItem().isFolder}>
-                <div>
-                  <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                    URL
-                  </label>
-                  <input
-                    type="text"
-                    value={editUrl()}
-                    onInput={(e) => setEditUrl(e.target.value)}
-                    placeholder="https://example.com"
-                    class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  />
-                </div>
-              </Show>
-            </div>
-            
-            <div class="flex gap-3 mt-6">
-              <button
-                onClick={handleSaveEdit}
-                class="flex-1 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
-              >
-                Save Changes
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </Show>
+      <EditModal
+        show={showEditModal()}
+        item={editingItem()?.item}
+        isFolder={editingItem()?.isFolder}
+        onSave={handleSaveEdit}
+        onCancel={handleCancelEdit}
+      />
 
       {/* Add Bookmark Modal */}
-      <Show when={showAddModal()}>
-        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleCancelAdd}>
-          <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
-              Add Bookmark
-            </h2>
-            
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={addName()}
-                  onInput={(e) => setAddName(e.target.value)}
-                  placeholder="Bookmark name"
-                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  autofocus
-                />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  URL
-                </label>
-                <input
-                  type="text"
-                  value={addUrl()}
-                  onInput={(e) => setAddUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                />
-              </div>
-            </div>
-            
-            <div class="flex gap-3 mt-6">
-              <button
-                onClick={handleSaveAdd}
-                class="flex-1 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
-              >
-                Add Bookmark
-              </button>
-              <button
-                onClick={handleCancelAdd}
-                class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </Show>
+      <AddBookmarkModal
+        show={showAddModal()}
+        name={addName}
+        setName={setAddName}
+        url={addUrl}
+        setUrl={setAddUrl}
+        onSave={handleSaveAdd}
+        onCancel={handleCancelAdd}
+      />
     </div>
   );
 }

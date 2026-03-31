@@ -1,0 +1,79 @@
+// BookmarksHeader - Header with title, search, breadcrumbs, and refresh
+import { Show, For } from 'solid-js';
+
+export default function BookmarksHeader(props) {
+  return (
+    <div class="bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] p-4">
+      <div class="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>
+          <Show when={!props.loading && !props.configured}>
+            <a href="/setup" target="_blank" class="text-sm text-[var(--color-accent)] hover:underline">
+              Setup Required
+            </a>
+          </Show>
+        </div>
+        
+        <Show when={!props.loading && props.configured}>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <div class="relative flex-1 sm:flex-none">
+              <input
+                type="text"
+                value={props.searchQuery}
+                onInput={props.onSearchInput}
+                placeholder="Search bookmarks and folders..."
+                class="px-4 py-2 pr-10 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-full sm:w-64"
+              />
+              <Show when={props.searchQuery.trim()}>
+                <button
+                  onClick={props.onClearSearch}
+                  class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                  title="Clear search"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </Show>
+            </div>
+            <button
+              onClick={props.onRefresh}
+              class="px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+              title="Refresh from Gist"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        </Show>
+      </div>
+      
+      {/* Breadcrumbs */}
+      <Show when={!props.loading && props.configured}>
+        <div class="max-w-[1920px] mx-auto mt-3 flex items-center gap-2 text-sm flex-wrap">
+          <button
+            class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors whitespace-nowrap"
+            onClick={() => props.onNavigateToBreadcrumb(-1)}
+          >
+            Home
+          </button>
+          <For each={props.currentPath}>
+            {(pathItem, i) => (
+              <>
+                <span class="text-[var(--color-text-secondary)]">/</span>
+                <button
+                  class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors truncate max-w-[150px] sm:max-w-none"
+                  onClick={() => props.onNavigateToBreadcrumb(i())}
+                  title={pathItem.name}
+                >
+                  {pathItem.name}
+                </button>
+              </>
+            )}
+          </For>
+        </div>
+      </Show>
+    </div>
+  );
+}
