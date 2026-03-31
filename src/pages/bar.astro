@@ -10,7 +10,10 @@ import '../styles/global.css';
   </div>
   
   <script>
-    // Handle messages from bookmarklet (to get current page info)
+    // Import storage functions
+    import { setGithubToken, setGistId } from '../utils/storage.js';
+    
+    // Handle messages from bookmarklet and setup window
     window.addEventListener('message', (event) => {
       if (event.data.type === 'get-page-info') {
         // This will be called by the bar to get current page details
@@ -28,7 +31,16 @@ import '../styles/global.css';
         }));
       }
       
-      // Reload when config is saved
+      // Save config from setup window (CRITICAL for partitioned storage)
+      if (event.data.type === 'save-config') {
+        console.log('Received config from setup window, saving to partitioned storage...');
+        setGithubToken(event.data.token);
+        setGistId(event.data.gistId);
+        console.log('Config saved! Reloading...');
+        window.location.reload();
+      }
+      
+      // Reload when config is saved (legacy)
       if (event.data.type === 'config-saved') {
         window.location.reload();
       }

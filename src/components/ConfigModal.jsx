@@ -43,27 +43,21 @@ export default function ConfigModal() {
         throw new Error(data.error);
       }
       
-      // Save to localStorage
+      // Save to localStorage in this context (for when setup is opened directly)
       setGithubToken(token());
       setGistId(gistId());
       
+      // IMPORTANT: Also broadcast to all iframes that might be listening
+      // This allows iframe's partitioned storage to receive the config
+      window.opener?.postMessage({
+        type: 'save-config',
+        token: token(),
+        gistId: gistId()
+      }, '*');
+      
       setSuccess(true);
+      setError('Configuration saved! You can close this tab and click "Reload" in the bookmarks bar.');
       
-      // Notify parent window if in iframe
-      if (window.parent !== window) {
-        window.parent.postMessage({ type: 'config-saved' }, '*');
-      }
-      
-      // Try to close the window (works if opened via window.open)
-      // If it doesn't close, show a message
-      setTimeout(() => {
-        const closed = window.close();
-        // If window.close() didn't work, update the success message
-        if (!closed && window.opener === null) {
-          setSuccess(false);
-          setError('Configuration saved! You can close this tab and refresh the bookmarklet.');
-        }
-      }, 1500);
     } catch (err) {
       setError(err.message || 'Failed to verify access to Gist');
     } finally {

@@ -319,16 +319,13 @@ export default function BookmarkBar(props) {
       <Show when={!loading() && !error() && !configured()}>
         <div class="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
           <span>Please configure your GitHub token and Gist ID</span>
-          <a href="/setup" target="_blank" class="text-[var(--color-accent)] hover:underline">
-            Setup
-          </a>
           <button
-            class="px-2 py-1 text-xs bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
-            onClick={handleReload}
-            title="Reload and request storage access"
+            class="text-[var(--color-accent)] hover:underline"
+            onClick={() => window.open('/setup', '_blank', 'width=600,height=700')}
           >
-            Reload
+            Setup
           </button>
+          <span class="text-xs text-[var(--color-text-secondary)]">(After saving, close the setup window)</span>
         </div>
       </Show>
       
