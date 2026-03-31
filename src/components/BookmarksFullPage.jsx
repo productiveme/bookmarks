@@ -349,9 +349,9 @@ export default function BookmarksFullPage() {
     <div class="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
       {/* Header */}
       <div class="bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] p-4">
-        <div class="max-w-[1920px] mx-auto flex items-center justify-between gap-4">
+        <div class="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>
             <Show when={!loading() && !configured()}>
               <a href="/setup" target="_blank" class="text-sm text-[var(--color-accent)] hover:underline">
                 Setup Required
@@ -360,14 +360,14 @@ export default function BookmarksFullPage() {
           </div>
           
           <Show when={!loading() && configured()}>
-            <div class="flex items-center gap-2">
-              <div class="relative">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <div class="relative flex-1 sm:flex-none">
                 <input
                   type="text"
                   value={searchQuery()}
                   onInput={handleSearchInput}
                   placeholder="Search bookmarks and folders..."
-                  class="px-4 py-2 pr-10 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-64"
+                  class="px-4 py-2 pr-10 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-full sm:w-64"
                 />
                 <Show when={searchQuery().trim()}>
                   <button
@@ -396,9 +396,9 @@ export default function BookmarksFullPage() {
         
         {/* Breadcrumbs */}
         <Show when={!loading() && configured()}>
-          <div class="max-w-[1920px] mx-auto mt-3 flex items-center gap-2 text-sm">
+          <div class="max-w-[1920px] mx-auto mt-3 flex items-center gap-2 text-sm flex-wrap">
             <button
-              class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors"
+              class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors whitespace-nowrap"
               onClick={() => navigateToBreadcrumb(-1)}
             >
               Home
@@ -408,8 +408,9 @@ export default function BookmarksFullPage() {
                 <>
                   <span class="text-[var(--color-text-secondary)]">/</span>
                   <button
-                    class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors"
+                    class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors truncate max-w-[150px] sm:max-w-none"
                     onClick={() => navigateToBreadcrumb(i())}
+                    title={pathItem.name}
                   >
                     {pathItem.name}
                   </button>
@@ -446,8 +447,8 @@ export default function BookmarksFullPage() {
         </Show>
 
         <Show when={!loading() && !error() && configured()}>
-          {/* Sidebar - Folders */}
-          <div class="w-64 bg-[var(--color-bg-primary)] border-r border-[var(--color-border)] p-4 overflow-y-auto">
+          {/* Sidebar - Folders (hidden on mobile) */}
+          <div class="hidden md:block w-64 bg-[var(--color-bg-primary)] border-r border-[var(--color-border)] p-4 overflow-y-auto">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-sm font-semibold text-[var(--color-text-secondary)] uppercase">Folders</h2>
               <button
@@ -533,15 +534,15 @@ export default function BookmarksFullPage() {
           </div>
 
           {/* Main Area - Bookmarks Grid */}
-          <div class="flex-1 p-6 overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
+          <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
               <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">
                 {searchQuery().trim() ? 'Search Results' : 'Bookmarks'}
               </h2>
               <Show when={!searchQuery().trim()}>
                 <button
                   onClick={handleAddBookmark}
-                  class="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+                  class="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors w-full sm:w-auto justify-center"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
