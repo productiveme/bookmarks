@@ -338,12 +338,18 @@ export default function BookmarksFullPage() {
     }
   };
 
-  const handleAddBookmark = async () => {
-    const name = prompt('Enter bookmark name:');
-    if (!name || !name.trim()) return;
-    
-    const url = prompt('Enter URL:');
-    if (!url || !url.trim()) return;
+  const handleAddBookmark = () => {
+    // Clear any previous values and show modal
+    setAddName('');
+    setAddUrl('');
+    setShowAddModal(true);
+  };
+
+  const handleSaveAdd = async () => {
+    if (!addName().trim() || !addUrl().trim()) {
+      alert('Please enter both name and URL');
+      return;
+    }
 
     try {
       const data = JSON.parse(JSON.stringify(bookmarks()));
@@ -359,8 +365,8 @@ export default function BookmarksFullPage() {
       
       current.push({
         type: 'link',
-        name: name.trim(),
-        url: url.trim()
+        name: addName().trim(),
+        url: addUrl().trim()
       });
       
       setBookmarks(data);
@@ -376,9 +382,20 @@ export default function BookmarksFullPage() {
       updateCurrentView(viewCurrent, currentPath());
       
       await saveBookmarks(data);
+      
+      // Close modal and clear state
+      setShowAddModal(false);
+      setAddName('');
+      setAddUrl('');
     } catch (err) {
       alert('Error adding bookmark: ' + err.message);
     }
+  };
+
+  const handleCancelAdd = () => {
+    setShowAddModal(false);
+    setAddName('');
+    setAddUrl('');
   };
 
   return (
@@ -690,6 +707,61 @@ export default function BookmarksFullPage() {
               </button>
               <button
                 onClick={handleCancelEdit}
+                class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </Show>
+
+      {/* Add Bookmark Modal */}
+      <Show when={showAddModal()}>
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleCancelAdd}>
+          <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
+              Add Bookmark
+            </h2>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={addName()}
+                  onInput={(e) => setAddName(e.target.value)}
+                  placeholder="Bookmark name"
+                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  autofocus
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  URL
+                </label>
+                <input
+                  type="text"
+                  value={addUrl()}
+                  onInput={(e) => setAddUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                />
+              </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+              <button
+                onClick={handleSaveAdd}
+                class="flex-1 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
+              >
+                Add Bookmark
+              </button>
+              <button
+                onClick={handleCancelAdd}
                 class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium"
               >
                 Cancel
