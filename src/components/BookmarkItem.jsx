@@ -2,11 +2,13 @@
 import { Show, createSignal } from 'solid-js';
 
 export default function BookmarkItem(props) {
-  const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
+  const [isEditing, setIsEditing] = createSignal(false);
+  const [editName, setEditName] = createSignal('');
+  const [editUrl, setEditUrl] = createSignal('');
   
   const handleClick = (e) => {
-    // Don't trigger if clicking delete buttons
-    if (showDeleteConfirm()) return;
+    // Don't trigger if editing
+    if (isEditing()) return;
     
     if (props.item.type === 'folder') {
       props.onFolderClick?.(props.item, props.index);
@@ -16,40 +18,83 @@ export default function BookmarkItem(props) {
     }
   };
   
-  const handleDeleteClick = (e) => {
+  const handleEditClick = (e) => {
     e.stopPropagation();
-    setShowDeleteConfirm(true);
+    setEditName(props.item.name);
+    setEditUrl(props.item.url || '');
+    setIsEditing(true);
   };
   
-  const handleDeleteConfirm = (e) => {
+  const handleSave = (e) => {
+    e.stopPropagation();
+    const updatedItem = {
+      ...props.item,
+      name: editName(),
+    };
+    
+    // Only update URL for links (not folders)
+    if (props.item.type === 'link') {
+      updatedItem.url = editUrl();
+    }
+    
+    props.onEdit?.(props.index, updatedItem);
+    setIsEditing(false);
+  };
+  
+  const handleCancel = (e) => {
+    e.stopPropagation();
+    setIsEditing(false);
+  };
+  
+  const handleDelete = (e) => {
     e.stopPropagation();
     props.onDelete?.(props.index);
-    setShowDeleteConfirm(false);
-  };
-  
-  const handleDeleteCancel = (e) => {
-    e.stopPropagation();
-    setShowDeleteConfirm(false);
+    setIsEditing(false);
   };
   
   return (
     <Show 
-      when={!showDeleteConfirm()}
+      when={!isEditing()}
       fallback={
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded bg-[var(--color-bg-hover)]">
-          <span class="text-sm text-[var(--color-text-secondary)]">Delete {props.item.name}?</span>
-          <button
-            class="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-            onClick={handleDeleteConfirm}
-          >
-            Yes
-          </button>
-          <button
-            class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
-            onClick={handleDeleteCancel}
-          >
-            No
-          </button>
+        <div class="flex flex-col gap-1 px-2 py-1.5 rounded bg-[var(--color-bg-hover)] min-w-[300px]">
+          <input
+            type="text"
+            value={editName()}
+            onInput={(e) => setEditName(e.target.value)}
+            placeholder="Name"
+            class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <Show when={props.item.type === 'link'}>
+            <input
+              type="text"
+              value={editUrl()}
+              onInput={(e) => setEditUrl(e.target.value)}
+              placeholder="URL"
+              class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Show>
+          <div class="flex items-center gap-1">
+            <button
+              class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+            <button
+              class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+            <button
+              class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              onClick={handleDelete}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       }
     >
@@ -77,11 +122,14 @@ export default function BookmarkItem(props) {
         </button>
         
         <button
-          class="px-0.5 py-0.5 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors leading-none"
-          onClick={handleDeleteClick}
-          title="Delete"
+          class="px-1 py-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+          onClick={handleEditClick}
+          title="Edit"
         >
-          <sup class="text-[9px] align-super relative -top-1">✕</sup>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
         </button>
       </div>
     </Show>

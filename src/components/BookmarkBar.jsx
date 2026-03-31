@@ -240,6 +240,34 @@ export default function BookmarkBar(props) {
     }
   };
   
+  const handleEdit = async (index, updatedItem) => {
+    try {
+      // Build the full path to this bookmark
+      const path = [...currentPath().map(p => p.index), index];
+      
+      // Deep clone the bookmarks data
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      // Navigate to the item and update it
+      let current = data.bookmarks;
+      for (let i = 0; i < path.length - 1; i++) {
+        current = current[path[i]].children;
+      }
+      
+      // Update the item at the final index
+      current[path[path.length - 1]] = updatedItem;
+      
+      // Optimistic update - update UI immediately
+      updateUIAfterChange(data);
+      
+      // Save to Gist in background
+      await saveBookmarks(data, true);
+    } catch (err) {
+      console.error('Error editing bookmark:', err);
+      alert('Error editing bookmark: ' + err.message);
+    }
+  };
+  
   // Search functionality
   const searchAllBookmarks = (items, query, results = []) => {
     for (const item of items) {
@@ -402,6 +430,7 @@ export default function BookmarkBar(props) {
                 index={index()}
                 onFolderClick={navigateToFolder}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             )}
           </For>

@@ -2,6 +2,21 @@
 
 This document provides coding standards and operational guidelines for AI coding agents working on the Bookmarks Bar project.
 
+## ⚠️ CRITICAL: Git Workflow
+
+**NEVER commit or push code without explicit user approval.**
+
+When you've made changes:
+1. Show the user what you changed (via git diff or summary)
+2. Wait for the user to review and approve
+3. Only commit/push when explicitly asked to do so
+
+This allows the user to:
+- Review code quality and correctness
+- Make additional changes if needed
+- Ensure commits have proper messages
+- Maintain control over the git history
+
 ## Project Overview
 
 A minimal bookmark manager built as a bookmarklet that stores data in GitHub Gist. Built with Astro (SSR), SolidJS, Tailwind CSS v4, and JavaScript (NOT TypeScript).
