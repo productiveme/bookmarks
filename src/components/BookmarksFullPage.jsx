@@ -14,6 +14,7 @@ export default function BookmarksFullPage() {
   const [searchQuery, setSearchQuery] = createSignal('');
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
   const [filteredFolders, setFilteredFolders] = createSignal([]);
+  const [showEditModal, setShowEditModal] = createSignal(false);
   const [editingItem, setEditingItem] = createSignal(null);
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
@@ -144,6 +145,7 @@ export default function BookmarksFullPage() {
     setEditingItem({ item, index, isFolder });
     setEditName(item.name);
     setEditUrl(item.url || '');
+    setShowEditModal(true);
   };
 
   const handleSaveEdit = async () => {
@@ -179,6 +181,7 @@ export default function BookmarksFullPage() {
       updateCurrentView(viewCurrent, currentPath());
       
       await saveBookmarks(data);
+      setShowEditModal(false);
       setEditingItem(null);
     } catch (err) {
       alert('Error saving: ' + err.message);
@@ -186,6 +189,7 @@ export default function BookmarksFullPage() {
   };
 
   const handleCancelEdit = () => {
+    setShowEditModal(false);
     setEditingItem(null);
   };
 
@@ -469,65 +473,37 @@ export default function BookmarksFullPage() {
             <div class="space-y-1">
               <For each={folders()}>
                 {(folder, index) => (
-                  <Show
-                    when={editingItem() && editingItem().isFolder && editingItem().index === index()}
-                    fallback={
-                      <div class="group flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
-                        <button
-                          class="flex-1 flex items-center gap-2 text-left"
-                          onClick={() => navigateToFolder(folder, index())}
-                        >
-                          <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                          </svg>
-                          <span class="text-[var(--color-text-primary)]">{folder.name}</span>
-                        </button>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleEdit(folder, index(), true)}
-                            class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-                            title="Edit"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(index(), true)}
-                            class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-                            title="Delete"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    }
-                  >
-                    <div class="p-2 bg-[var(--color-bg-hover)] rounded">
-                      <input
-                        type="text"
-                        value={editName()}
-                        onInput={(e) => setEditName(e.target.value)}
-                        class="w-full px-2 py-1 text-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] mb-2"
-                      />
-                      <div class="flex gap-1">
-                        <button
-                          onClick={handleSaveEdit}
-                          class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                  <div class="group flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
+                    <button
+                      class="flex-1 flex items-center gap-2 text-left"
+                      onClick={() => navigateToFolder(folder, index())}
+                    >
+                      <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      <span class="text-[var(--color-text-primary)]">{folder.name}</span>
+                    </button>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEdit(folder, index(), true)}
+                        class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+                        title="Edit"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(index(), true)}
+                        class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
+                        title="Delete"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
-                  </Show>
+                  </div>
                 )}
               </For>
             </div>
@@ -585,82 +561,103 @@ export default function BookmarksFullPage() {
               {/* Bookmark tiles */}
               <For each={displayBookmarks()}>
                 {(bookmark, index) => (
-                  <Show
-                    when={editingItem() && !editingItem().isFolder && editingItem().index === index()}
-                    fallback={
-                      <div class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-shadow">
-                        <div class="flex items-start justify-between mb-2">
-                          <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                          <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleEdit(bookmark, index(), false)}
-                              class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-                              title="Edit"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(index(), false)}
-                              class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-                              title="Delete"
-                            >
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                        <a
-                          href={bookmark.url}
-                          class="block"
-                        >
-                          <h3 class="font-medium text-[var(--color-text-primary)] mb-1 line-clamp-2">{bookmark.name}</h3>
-                          <p class="text-xs text-[var(--color-text-secondary)] truncate">{bookmark.url}</p>
-                        </a>
-                      </div>
-                    }
-                  >
-                    <div class="bg-[var(--color-bg-hover)] border border-[var(--color-border)] rounded-lg p-4">
-                      <input
-                        type="text"
-                        value={editName()}
-                        onInput={(e) => setEditName(e.target.value)}
-                        placeholder="Name"
-                        class="w-full px-2 py-1 text-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] mb-2"
-                      />
-                      <input
-                        type="text"
-                        value={editUrl()}
-                        onInput={(e) => setEditUrl(e.target.value)}
-                        placeholder="URL"
-                        class="w-full px-2 py-1 text-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] mb-2"
-                      />
-                      <div class="flex gap-1">
+                  <div class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-shadow">
+                    <div class="flex items-start justify-between mb-2">
+                      <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={handleSaveEdit}
-                          class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+                          onClick={() => handleEdit(bookmark, index(), false)}
+                          class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+                          title="Edit"
                         >
-                          Save
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
                         <button
-                          onClick={handleCancelEdit}
-                          class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+                          onClick={() => handleDelete(index(), false)}
+                          class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
+                          title="Delete"
                         >
-                          Cancel
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
                       </div>
                     </div>
-                  </Show>
+                    <a
+                      href={bookmark.url}
+                      class="block"
+                    >
+                      <h3 class="font-medium text-[var(--color-text-primary)] mb-1 line-clamp-2">{bookmark.name}</h3>
+                      <p class="text-xs text-[var(--color-text-secondary)] truncate">{bookmark.url}</p>
+                    </a>
+                  </div>
                 )}
               </For>
             </div>
           </div>
         </Show>
       </div>
+
+      {/* Edit Modal */}
+      <Show when={showEditModal()}>
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleCancelEdit}>
+          <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
+              {editingItem() && editingItem().isFolder ? 'Edit Folder' : 'Edit Bookmark'}
+            </h2>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editName()}
+                  onInput={(e) => setEditName(e.target.value)}
+                  placeholder="Name"
+                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  autofocus
+                />
+              </div>
+              
+              <Show when={editingItem() && !editingItem().isFolder}>
+                <div>
+                  <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    URL
+                  </label>
+                  <input
+                    type="text"
+                    value={editUrl()}
+                    onInput={(e) => setEditUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  />
+                </div>
+              </Show>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+              <button
+                onClick={handleSaveEdit}
+                class="flex-1 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 }
