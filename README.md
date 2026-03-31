@@ -84,7 +84,18 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
 
 **Important**: The `PUBLIC_APP_URL` must be set at **build time** because it gets embedded in the bookmarklet code.
 
-1. **Docker Deployment**
+1. **Dokploy Deployment**
+   
+   In your Dokploy project settings:
+   - Go to **Build** settings
+   - Add a **Build Argument**:
+     - Key: `PUBLIC_APP_URL`
+     - Value: `https://bookmarks.productive.me` (your domain)
+   - Redeploy the application
+   
+   The build argument will be passed to Docker during build: `--build-arg PUBLIC_APP_URL=https://bookmarks.productive.me`
+
+2. **Docker Deployment (Manual)**
    ```bash
    # Build with your production URL
    docker build \
@@ -95,7 +106,7 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
    docker run -d -p 4321:4321 --name bookmarks-bar bookmarks-bar
    ```
 
-2. **Traditional Hosting**
+3. **Traditional Hosting**
    ```bash
    # Set the environment variable
    export PUBLIC_APP_URL=https://bookmarks.productive.me
@@ -106,10 +117,14 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
    # Deploy the dist folder
    ```
 
-3. **Hosting Requirements**
+4. **Hosting Requirements**
    - Server-side rendering (for API routes)
    - CORS headers for iframe embedding
    - Node.js runtime (v22.12.0 or higher)
+
+5. **Verify the Configuration**
+   - Visit `https://your-domain.com/debug` to see the configured `PUBLIC_APP_URL`
+   - The value should match your production domain
 
 ## Project Structure
 
