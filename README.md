@@ -220,6 +220,24 @@ npm run build
 
 **Note**: The first time you use the bookmarklet, you need to click "Reload" to grant the iframe permission to access localStorage. This is a browser security feature for third-party iframes. After the first time, it should work automatically.
 
+### Content Security Policy (CSP) Restrictions
+
+Some websites have strict Content Security Policy (CSP) settings that block third-party iframes. 
+
+**Automatic Fallback:**
+- The bookmarklet detects when CSP blocks the iframe
+- It automatically opens your bookmarks in a new tab instead
+- You'll see a console message: "Bookmarks Bar: CSP blocked iframe, opening in new tab"
+- This provides full functionality even on CSP-restricted sites
+
+**Sites commonly affected:**
+- GitHub pages
+- Banking websites
+- Enterprise web applications
+- Sites with strict security policies
+
+**Note**: The fallback opens bookmarks in a separate tab, which means you won't see the inline bar on the original page. This is a browser security limitation that cannot be bypassed.
+
 ### Using the Bookmarklet
 
 - Click the bookmarklet on any webpage to toggle the bookmark bar

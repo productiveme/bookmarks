@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BookmarkBar from '../components/BookmarkBar.jsx';
+import '../styles/global.css';
+---
+
+<Layout title="Bookmarks - Full Page View">
+  <div class="min-h-screen bg-[var(--color-bg-secondary)] p-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl border border-[var(--color-border)] mb-4 p-4">
+        <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-2">
+          📚 Bookmarks
+        </h1>
+        <p class="text-sm text-[var(--color-text-secondary)]">
+          Full page view (opened due to CSP restrictions on the parent page)
+        </p>
+      </div>
+      
+      <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl border border-[var(--color-border)] overflow-hidden">
+        <div style="height: 40px;">
+          <BookmarkBar client:only="solid-js" />
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
