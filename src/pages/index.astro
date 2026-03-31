@@ -50,13 +50,24 @@ const bookmarkletCode = generateBookmarklet(appUrl);
               <p class="text-sm text-[var(--color-text-secondary)] mt-1">
                 Drag this button to your bookmarks bar:
               </p>
-              <a
-                href={bookmarkletCode}
-                class="inline-block mt-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors no-underline"
-                onclick="alert('Drag this button to your bookmarks bar!'); return false;"
-              >
-                Bookmarks Bar
-              </a>
+              <div class="flex items-center gap-2 mt-2">
+                <a
+                  href={bookmarkletCode}
+                  class="inline-block px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors no-underline"
+                  onclick="alert('Drag this button to your bookmarks bar!'); return false;"
+                >
+                  Bookmarks Bar
+                </a>
+                <button
+                  id="copy-bookmarklet"
+                  class="px-3 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors border border-[var(--color-border)]"
+                  title="Copy bookmarklet code"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </li>
           
@@ -87,4 +98,26 @@ const bookmarkletCode = generateBookmarklet(appUrl);
       </div>
     </div>
   </main>
+  
+  <script define:vars={{ bookmarkletCode }}>
+    // Copy bookmarklet code to clipboard
+    document.getElementById('copy-bookmarklet')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(bookmarkletCode);
+        const button = document.getElementById('copy-bookmarklet');
+        const originalHTML = button.innerHTML;
+        
+        // Show success feedback
+        button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+        button.classList.add('bg-green-500', 'text-white');
+        
+        setTimeout(() => {
+          button.innerHTML = originalHTML;
+          button.classList.remove('bg-green-500', 'text-white');
+        }, 2000);
+      } catch (err) {
+        alert('Failed to copy: ' + err.message);
+      }
+    });
+  </script>
 </Layout>
