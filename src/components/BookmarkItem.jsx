@@ -52,11 +52,41 @@ export default function BookmarkItem(props) {
     setIsEditing(false);
   };
   
+  const handleMoveLeft = (e) => {
+    e.stopPropagation();
+    props.onMove?.(props.index, -1); // Move up (left) in the list
+  };
+  
+  const handleMoveRight = (e) => {
+    e.stopPropagation();
+    props.onMove?.(props.index, 1); // Move down (right) in the list
+  };
+  
   return (
     <Show 
       when={!isEditing()}
       fallback={
         <div class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
+          <button
+            class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            onClick={handleMoveLeft}
+            disabled={props.isFirst}
+            title="Move left"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            onClick={handleMoveRight}
+            disabled={props.isLast}
+            title="Move right"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
           <input
             type="text"
             value={editName()}

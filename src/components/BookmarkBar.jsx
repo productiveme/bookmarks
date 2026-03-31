@@ -84,11 +84,12 @@ export default function BookmarkBar(props) {
     setCurrentBookmarks(folder.children || []);
   };
   
-  const navigateToBreadcrumb = (targetIndex) => {
+  const navigateToBreadcrumb = async (targetIndex) => {
     if (targetIndex === -1) {
-      // Navigate to root
+      // Navigate to root - reload from Gist to get latest data
+      await loadBookmarks();
       setCurrentPath([]);
-      setCurrentBookmarks(bookmarks().bookmarks || []);
+      // currentBookmarks will be set by loadBookmarks
     } else {
       // Navigate to specific breadcrumb
       const newPath = currentPath().slice(0, targetIndex + 1);
@@ -271,6 +272,45 @@ export default function BookmarkBar(props) {
     } catch (err) {
       console.error('Error editing bookmark:', err);
       alert('Error editing bookmark: ' + err.message);
+    }
+  };
+  
+  const handleMove = async (index, direction) => {
+    try {
+      // Build the full path to this bookmark
+      const path = [...currentPath().map(p => p.index), index];
+      
+      // Deep clone the bookmarks data
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      // Navigate to the parent array
+      let current = data.bookmarks;
+      for (let i = 0; i < path.length - 1; i++) {
+        current = current[path[i]].children;
+      }
+      
+      // Calculate new position
+      const currentIndex = path[path.length - 1];
+      const newIndex = currentIndex + direction;
+      
+      // Check bounds
+      if (newIndex < 0 || newIndex >= current.length) {
+        return;
+      }
+      
+      // Swap items
+      const temp = current[currentIndex];
+      current[currentIndex] = current[newIndex];
+      current[newIndex] = temp;
+      
+      // Optimistic update - update UI immediately
+      updateUIAfterChange(data);
+      
+      // Save to Gist in background
+      await saveBookmarks(data, true);
+    } catch (err) {
+      console.error('Error moving bookmark:', err);
+      alert('Error moving bookmark: ' + err.message);
     }
   };
   
@@ -474,9 +514,12 @@ export default function BookmarkBar(props) {
               <BookmarkItem
                 item={item}
                 index={index()}
+                isFirst={index() === 0}
+                isLast={index() === displayBookmarks().length - 1}
                 onFolderClick={navigateToFolder}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
+                onMove={handleMove}
               />
             )}
           </For>
