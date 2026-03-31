@@ -367,6 +367,16 @@ export default function BookmarkBar(props) {
     return currentBookmarks();
   };
   
+  // Get initials from a name for mobile breadcrumbs
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+  
   // Handle reload button click - request storage access first
   const handleReload = async () => {
     try {
@@ -441,8 +451,10 @@ export default function BookmarkBar(props) {
           <button
             class="px-2 py-1 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded"
             onClick={() => navigateToBreadcrumb(-1)}
+            title="Home"
           >
-            Home
+            <span class="hidden sm:inline">Home</span>
+            <span class="sm:hidden">H</span>
           </button>
           <For each={currentPath()}>
             {(pathItem, i) => (
@@ -451,8 +463,10 @@ export default function BookmarkBar(props) {
                 <button
                   class="px-2 py-1 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded"
                   onClick={() => navigateToBreadcrumb(i())}
+                  title={pathItem.name}
                 >
-                  {pathItem.name}
+                  <span class="hidden sm:inline">{pathItem.name}</span>
+                  <span class="sm:hidden">{getInitials(pathItem.name)}</span>
                 </button>
               </>
             )}
@@ -535,21 +549,30 @@ export default function BookmarkBar(props) {
                 onClick={handleAddCurrentPage}
                 title="Add current page as bookmark"
               >
-                Page
+                <span class="hidden sm:inline">Page</span>
+                <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
               </button>
               <button
                 class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
                 onClick={handleAddFolder}
                 title="Add new folder"
               >
-                Folder
+                <span class="hidden sm:inline">Folder</span>
+                <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
               </button>
               <button
                 class="px-2 py-1 text-xs bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors whitespace-nowrap"
                 onClick={() => setShowAddMenu(false)}
                 title="Cancel"
               >
-                Cancel
+                <span class="hidden sm:inline">Cancel</span>
+                <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           }
@@ -559,7 +582,10 @@ export default function BookmarkBar(props) {
               class="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
               onClick={() => setShowAddMenu(true)}
             >
-              + Add
+              <span class="hidden sm:inline">+ Add</span>
+              <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
             </button>
           </div>
         </Show>

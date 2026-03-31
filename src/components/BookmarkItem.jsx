@@ -108,20 +108,32 @@ export default function BookmarkItem(props) {
           <button
             class="px-2 py-0.5 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
             onClick={handleSave}
+            title="Save"
           >
-            Save
+            <span class="hidden sm:inline">Save</span>
+            <svg class="w-3 h-3 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
           </button>
           <button
             class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors whitespace-nowrap"
             onClick={handleCancel}
+            title="Cancel"
           >
-            Cancel
+            <span class="hidden sm:inline">Cancel</span>
+            <svg class="w-3 h-3 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
           <button
             class="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors whitespace-nowrap"
             onClick={handleDelete}
+            title="Delete"
           >
-            Delete
+            <span class="hidden sm:inline">Delete</span>
+            <svg class="w-3 h-3 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
           </button>
         </div>
       }
