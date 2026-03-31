@@ -62,16 +62,17 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
 
 ### Docker Deployment
 
-1. **Build the image**
+1. **Build the image with your production URL**
    ```bash
-   docker build -t bookmarks-bar .
+   docker build \
+     --build-arg PUBLIC_APP_URL=https://bookmarks.productive.me \
+     -t bookmarks-bar .
    ```
 
 2. **Run the container**
    ```bash
    docker run -d \
      -p 4321:4321 \
-     -e PUBLIC_APP_URL=https://bookmarks.productive.me \
      --name bookmarks-bar \
      bookmarks-bar
    ```
@@ -81,17 +82,34 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
 
 ### Production Deployment
 
-1. **Environment Variables**
-   - Set `PUBLIC_APP_URL` to your production domain (e.g., `https://bookmarks.productive.me`)
-   - This URL will be embedded in the bookmarklet
+**Important**: The `PUBLIC_APP_URL` must be set at **build time** because it gets embedded in the bookmarklet code.
 
-2. **Deploy Options**
-   - **Docker**: Use the Dockerfile for containerized deployment
-   - **Traditional Hosting**: Build with `npm run build` and deploy the `dist` folder
-   - Make sure the hosting supports:
-     - Server-side rendering (for API routes)
-     - CORS headers for iframe embedding
-     - Node.js runtime
+1. **Docker Deployment**
+   ```bash
+   # Build with your production URL
+   docker build \
+     --build-arg PUBLIC_APP_URL=https://bookmarks.productive.me \
+     -t bookmarks-bar .
+   
+   # Run the container
+   docker run -d -p 4321:4321 --name bookmarks-bar bookmarks-bar
+   ```
+
+2. **Traditional Hosting**
+   ```bash
+   # Set the environment variable
+   export PUBLIC_APP_URL=https://bookmarks.productive.me
+   
+   # Build the application
+   npm run build
+   
+   # Deploy the dist folder
+   ```
+
+3. **Hosting Requirements**
+   - Server-side rendering (for API routes)
+   - CORS headers for iframe embedding
+   - Node.js runtime (v22.12.0 or higher)
 
 ## Project Structure
 
@@ -134,7 +152,7 @@ The application uses the following environment variables:
 |----------|-------------|---------|----------|
 | `PUBLIC_APP_URL` | The public URL where the app is hosted | `http://localhost:4321` | Yes (for production) |
 
-**Note**: Variables prefixed with `PUBLIC_` are exposed to the client-side code.
+**Important**: `PUBLIC_APP_URL` must be set at **build time** (not runtime) because Astro bakes public environment variables into the built JavaScript.
 
 ### Setting Environment Variables
 
@@ -148,9 +166,15 @@ export PUBLIC_APP_URL=http://localhost:4321
 PUBLIC_APP_URL=http://localhost:4321
 ```
 
-**Docker**:
+**Docker (build argument)**:
 ```bash
-docker run -e PUBLIC_APP_URL=https://bookmarks.productive.me ...
+docker build --build-arg PUBLIC_APP_URL=https://bookmarks.productive.me -t bookmarks-bar .
+```
+
+**Traditional build**:
+```bash
+export PUBLIC_APP_URL=https://bookmarks.productive.me
+npm run build
 ```
 
 ## Usage

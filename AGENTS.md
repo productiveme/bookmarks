@@ -28,9 +28,11 @@ This project does not have unit tests. Manual testing via the bookmarklet is req
 
 ### Docker
 ```bash
-docker-compose up -d              # Start with Docker
-docker-compose down               # Stop containers
-docker build -t bookmarks-bar .   # Build image manually
+# Build with production URL (IMPORTANT: set at build time!)
+docker build --build-arg PUBLIC_APP_URL=https://bookmarks.productive.me -t bookmarks-bar .
+
+# Run the container
+docker run -d -p 4321:4321 --name bookmarks-bar bookmarks-bar
 ```
 
 ## Code Style Guidelines
@@ -197,7 +199,9 @@ src/
 
 ### Environment Variables
 - Only one env var: `PUBLIC_APP_URL`
-- Set via `.envrc` (direnv) or `.env` file
+- **CRITICAL**: Must be set at **build time** (not runtime) - gets baked into the bookmarklet code
+- Set via `.envrc` (direnv) or `.env` file for development
+- For Docker: Use `--build-arg PUBLIC_APP_URL=https://your-domain.com` when building
 - Access in code: `import.meta.env.PUBLIC_APP_URL`
 - Default: `http://localhost:4321`
 
@@ -205,11 +209,12 @@ src/
 
 1. **Always use explicit `.jsx` extension** when importing SolidJS components
 2. **Port consistency is critical** - localStorage breaks if port changes
-3. **40px height constraint** - Keep UI compact, use small text/icons
-4. **Server-side rendering** - SolidJS components need `client:only` in Astro
-5. **No TypeScript** - Despite tsconfig.json, use JavaScript only
-6. **Optimistic updates** - Always update UI first for better UX
-7. **GitHub token security** - Stored in localStorage (user accepts risk)
+3. **PUBLIC_APP_URL must be set at BUILD TIME** - Docker builds need `--build-arg`
+4. **40px height constraint** - Keep UI compact, use small text/icons
+5. **Server-side rendering** - SolidJS components need `client:only` in Astro
+6. **No TypeScript** - Despite tsconfig.json, use JavaScript only
+7. **Optimistic updates** - Always update UI first for better UX
+8. **GitHub token security** - Stored in localStorage (user accepts risk)
 8. **Gists are secret** by default (not public)
 
 ## File References
