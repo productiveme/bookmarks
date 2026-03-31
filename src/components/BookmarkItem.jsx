@@ -56,13 +56,13 @@ export default function BookmarkItem(props) {
     <Show 
       when={!isEditing()}
       fallback={
-        <div class="flex flex-col gap-1 px-2 py-1.5 rounded bg-[var(--color-bg-hover)] min-w-[300px]">
+        <div class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
           <input
             type="text"
             value={editName()}
             onInput={(e) => setEditName(e.target.value)}
             placeholder="Name"
-            class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-32"
             onClick={(e) => e.stopPropagation()}
           />
           <Show when={props.item.type === 'link'}>
@@ -71,30 +71,28 @@ export default function BookmarkItem(props) {
               value={editUrl()}
               onInput={(e) => setEditUrl(e.target.value)}
               placeholder="URL"
-              class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-48"
               onClick={(e) => e.stopPropagation()}
             />
           </Show>
-          <div class="flex items-center gap-1">
-            <button
-              class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-              onClick={handleSave}
-            >
-              Save
-            </button>
-            <button
-              class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-            <button
-              class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-              onClick={handleDelete}
-            >
-              Delete
-            </button>
-          </div>
+          <button
+            class="px-2 py-0.5 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
+            onClick={handleSave}
+          >
+            Save
+          </button>
+          <button
+            class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors whitespace-nowrap"
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+          <button
+            class="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors whitespace-nowrap"
+            onClick={handleDelete}
+          >
+            Delete
+          </button>
         </div>
       }
     >
