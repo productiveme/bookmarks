@@ -18,10 +18,30 @@ export default function BookmarkBar(props) {
   
   onMount(() => {
     // Check configuration on mount (client-side only)
-    const isConfigured = hasConfiguration();
-    console.log('BookmarkBar mounted. Configured:', isConfigured);
-    setConfigured(isConfigured);
-    loadBookmarks();
+    // Add a small delay to ensure localStorage is fully accessible in iframe context
+    const checkConfig = () => {
+      const token = getGithubToken();
+      const gistId = getGistId();
+      const isConfigured = !!(token && gistId);
+      
+      console.log('BookmarkBar mounted. Configured:', isConfigured);
+      console.log('Token:', token ? 'exists' : 'missing');
+      console.log('GistId:', gistId ? 'exists' : 'missing');
+      
+      setConfigured(isConfigured);
+      
+      if (isConfigured) {
+        loadBookmarks();
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    // Check immediately
+    checkConfig();
+    
+    // Also check after a short delay in case localStorage wasn't ready
+    setTimeout(checkConfig, 200);
   });
   
   const loadBookmarks = async () => {
@@ -289,6 +309,13 @@ export default function BookmarkBar(props) {
           <a href="/setup" target="_blank" class="text-[var(--color-accent)] hover:underline">
             Setup
           </a>
+          <button
+            class="px-2 py-1 text-xs bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+            onClick={() => window.location.reload()}
+            title="Reload if you just completed setup"
+          >
+            Reload
+          </button>
         </div>
       </Show>
       

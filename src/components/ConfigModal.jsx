@@ -54,9 +54,15 @@ export default function ConfigModal() {
         window.parent.postMessage({ type: 'config-saved' }, '*');
       }
       
-      // Close after short delay
+      // Try to close the window (works if opened via window.open)
+      // If it doesn't close, show a message
       setTimeout(() => {
-        window.close();
+        const closed = window.close();
+        // If window.close() didn't work, update the success message
+        if (!closed && window.opener === null) {
+          setSuccess(false);
+          setError('Configuration saved! You can close this tab and refresh the bookmarklet.');
+        }
       }, 1500);
     } catch (err) {
       setError(err.message || 'Failed to verify access to Gist');
