@@ -293,6 +293,19 @@ export default function BookmarkBar(props) {
     return currentBookmarks();
   };
   
+  // Handle reload button click - request storage access first
+  const handleReload = async () => {
+    try {
+      if (window.requestStorageAccessForSetup) {
+        const granted = await window.requestStorageAccessForSetup();
+        console.log('Storage access granted:', granted);
+      }
+    } catch (err) {
+      console.error('Error requesting storage access:', err);
+    }
+    window.location.reload();
+  };
+  
   return (
     <div class="flex items-center h-full bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] px-2 gap-2">
       <Show when={loading()}>
@@ -311,8 +324,8 @@ export default function BookmarkBar(props) {
           </a>
           <button
             class="px-2 py-1 text-xs bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
-            onClick={() => window.location.reload()}
-            title="Reload if you just completed setup"
+            onClick={handleReload}
+            title="Reload and request storage access"
           >
             Reload
           </button>

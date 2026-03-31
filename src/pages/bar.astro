@@ -21,6 +21,13 @@ import '../styles/global.css';
         }, '*');
       }
       
+      if (event.data.type === 'page-info') {
+        // Forward to component
+        window.dispatchEvent(new CustomEvent('page-info-received', { 
+          detail: event.data 
+        }));
+      }
+      
       // Reload when config is saved
       if (event.data.type === 'config-saved') {
         window.location.reload();
@@ -54,6 +61,29 @@ import '../styles/global.css';
             resolve(null);
           }, 2000);
         });
+      };
+      
+      // Function to request storage access (called when user clicks setup)
+      window.requestStorageAccessForSetup = async () => {
+        try {
+          if (!document.requestStorageAccess) {
+            console.log('Storage Access API not supported, using fallback');
+            return true; // Fallback for browsers without the API
+          }
+          
+          const hasAccess = await document.hasStorageAccess();
+          console.log('Has storage access:', hasAccess);
+          
+          if (!hasAccess) {
+            console.log('Requesting storage access with user interaction...');
+            await document.requestStorageAccess();
+            console.log('Storage access granted!');
+          }
+          return true;
+        } catch (error) {
+          console.error('Storage access error:', error);
+          return false;
+        }
       };
     }
   </script>

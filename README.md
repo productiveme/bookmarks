@@ -203,14 +203,22 @@ npm run build
    - Select only the `gist` scope
    - Copy the token
 
-2. **Configure the App**
-   - Visit `/setup` on your deployed app
+2. **Install the Bookmarklet**
+   - Visit your deployed app's homepage
+   - Drag the "Bookmarks Bar" button to your browser's bookmarks bar
+
+3. **First-Time Configuration**
+   - Click the bookmarklet on any webpage
+   - Click **Setup** to open the configuration page in a new tab
    - Paste your GitHub token
    - Either create a new Gist or enter an existing Gist ID
    - Click "Save Configuration"
+   - Close the setup tab and return to your webpage
+   - Click the **Reload** button in the bookmarks bar
+     - This grants storage access permission (browser security requirement)
+   - Your bookmarks will now load!
 
-3. **Install the Bookmarklet**
-   - Drag the "📚 Bookmarks Bar" button from the homepage to your browser's bookmarks bar
+**Note**: The first time you use the bookmarklet, you need to click "Reload" to grant the iframe permission to access localStorage. This is a browser security feature for third-party iframes. After the first time, it should work automatically.
 
 ### Using the Bookmarklet
 
