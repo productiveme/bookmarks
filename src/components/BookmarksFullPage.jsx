@@ -1,4 +1,4 @@
-// BookmarksFullPage - Full page view with sidebar and tile grid
+// BookmarksFullPage - Bookmarks Manager with sidebar and tile grid
 import { createSignal, Show, For, onMount } from 'solid-js';
 import { getGithubToken, getGistId } from '../utils/storage';
 import { parseYaml, stringifyYaml, deleteBookmarkAtPath } from '../utils/yaml';
@@ -13,6 +13,7 @@ export default function BookmarksFullPage() {
   const [configured, setConfigured] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal('');
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
+  const [filteredFolders, setFilteredFolders] = createSignal([]);
   const [editingItem, setEditingItem] = createSignal(null);
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
@@ -206,9 +207,44 @@ export default function BookmarksFullPage() {
     
     if (query.trim()) {
       const results = searchAllBookmarks(bookmarks().bookmarks || [], query);
+      setFilteredFolders(results.filter(item => item.type === 'folder'));
       setFilteredBookmarks(results.filter(item => item.type === 'link'));
     } else {
+      setFilteredFolders([]);
       setFilteredBookmarks([]);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setFilteredFolders([]);
+    setFilteredBookmarks([]);
+  };
+
+  const handleSearchFolderClick = (folder) => {
+    // Find the path to this folder in the bookmarks tree
+    const findFolderPath = (items, target, currentPath = []) => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item === target) {
+          return [...currentPath, { name: item.name, index: i }];
+        }
+        if (item.type === 'folder' && item.children) {
+          const found = findFolderPath(item.children, target, [...currentPath, { name: item.name, index: i }]);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const path = findFolderPath(bookmarks().bookmarks || [], folder);
+    if (path) {
+      // Clear search
+      handleClearSearch();
+      
+      // Navigate to the folder
+      setCurrentPath(path);
+      updateCurrentView(folder.children || [], path);
     }
   };
 
@@ -217,6 +253,13 @@ export default function BookmarksFullPage() {
       return filteredBookmarks();
     }
     return currentBookmarks();
+  };
+
+  const displayFolders = () => {
+    if (searchQuery().trim()) {
+      return filteredFolders();
+    }
+    return [];
   };
 
   const handleAddFolder = async () => {
@@ -318,13 +361,26 @@ export default function BookmarksFullPage() {
           
           <Show when={!loading() && configured()}>
             <div class="flex items-center gap-2">
-              <input
-                type="text"
-                value={searchQuery()}
-                onInput={handleSearchInput}
-                placeholder="Search bookmarks..."
-                class="px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-64"
-              />
+              <div class="relative">
+                <input
+                  type="text"
+                  value={searchQuery()}
+                  onInput={handleSearchInput}
+                  placeholder="Search bookmarks and folders..."
+                  class="px-4 py-2 pr-10 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-64"
+                />
+                <Show when={searchQuery().trim()}>
+                  <button
+                    onClick={handleClearSearch}
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                    title="Clear search"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </Show>
+              </div>
               <button
                 onClick={() => loadBookmarks()}
                 class="px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
@@ -495,15 +551,37 @@ export default function BookmarksFullPage() {
               </Show>
             </div>
             
-            <Show when={displayBookmarks().length === 0}>
+            <Show when={displayBookmarks().length === 0 && displayFolders().length === 0}>
               <div class="text-center py-12">
                 <p class="text-[var(--color-text-secondary)]">
-                  {searchQuery().trim() ? 'No bookmarks found' : 'No bookmarks in this folder'}
+                  {searchQuery().trim() ? 'No results found' : 'No bookmarks in this folder'}
                 </p>
               </div>
             </Show>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {/* Folder tiles (shown only in search results) */}
+              <For each={displayFolders()}>
+                {(folder) => (
+                  <button
+                    onClick={() => handleSearchFolderClick(folder)}
+                    class="group bg-[var(--color-bg-primary)] border-2 border-[var(--color-accent)] border-dashed rounded-lg p-4 hover:shadow-lg transition-shadow text-left"
+                  >
+                    <div class="flex items-start justify-between mb-2">
+                      <svg class="w-5 h-5 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      <svg class="w-4 h-4 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                    <h3 class="font-medium text-[var(--color-text-primary)] mb-1 line-clamp-2">{folder.name}</h3>
+                    <p class="text-xs text-[var(--color-text-secondary)]">Folder • Click to open</p>
+                  </button>
+                )}
+              </For>
+              
+              {/* Bookmark tiles */}
               <For each={displayBookmarks()}>
                 {(bookmark, index) => (
                   <Show
