@@ -153,17 +153,17 @@ export default function BookmarkItem(props) {
           }
         >
           <div class="flex items-center gap-2 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
-            <span class="text-xs text-[var(--color-text-primary)]">
+            <span class="text-xs text-[var(--color-text-primary)] whitespace-nowrap">
               Delete {props.item.name}?
             </span>
             <button
-              class="px-2 py-0.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              class="px-2 py-0.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors whitespace-nowrap"
               onClick={handleConfirmDelete}
             >
               Delete
             </button>
             <button
-              class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+              class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors whitespace-nowrap"
               onClick={handleCancelDelete}
             >
               Cancel
