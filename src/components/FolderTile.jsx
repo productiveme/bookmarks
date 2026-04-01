@@ -42,10 +42,11 @@ export default function FolderTile(props) {
   return (
     <button
       onClick={handleClick}
-      class="group bg-[var(--color-bg-primary)] border-2 border-[var(--color-accent)] border-dashed rounded-lg p-4 hover:shadow-lg transition-all text-left w-full"
+      class="group bg-[var(--color-bg-primary)] border-2 border-dashed rounded-lg p-4 hover:shadow-lg transition-all text-left w-full"
       classList={{
         'opacity-50': props.isDragging,
-        'ring-2 ring-[var(--color-accent)] ring-offset-2': props.isDropTarget,
+        'border-[var(--color-accent)]': !props.isDropTarget,
+        'border-[var(--color-accent)] bg-[var(--color-accent)]/10 border-solid': props.isDropTarget,
         'cursor-grab': props.draggable,
         'cursor-grabbing': props.isDragging,
       }}

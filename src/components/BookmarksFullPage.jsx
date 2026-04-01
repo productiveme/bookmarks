@@ -6,6 +6,7 @@ import BookmarksHeader from './BookmarksHeader.jsx';
 import BookmarksSidebar from './BookmarksSidebar.jsx';
 import BookmarkTile from './BookmarkTile.jsx';
 import FolderTile from './FolderTile.jsx';
+import DropZone from './DropZone.jsx';
 import EditModal from './EditModal.jsx';
 import AddBookmarkModal from './AddBookmarkModal.jsx';
 
@@ -33,6 +34,7 @@ export default function BookmarksFullPage() {
   const [draggedItem, setDraggedItem] = createSignal(null);
   const [dropTargetItem, setDropTargetItem] = createSignal(null);
   const [dropOnFolder, setDropOnFolder] = createSignal(false);
+  const [dropZoneIndex, setDropZoneIndex] = createSignal(null); // Track which drop zone is active
 
   onMount(() => {
     const token = getGithubToken();
@@ -673,6 +675,78 @@ export default function BookmarksFullPage() {
     handleDragEnd();
   };
 
+  const handleDropZoneDragOver = (e, index) => {
+    e.preventDefault();
+    setDropZoneIndex(index);
+    setDropTargetItem(null);
+    setDropOnFolder(false);
+  };
+
+  const handleDropZoneDragLeave = () => {
+    setDropZoneIndex(null);
+  };
+
+  const handleDropZoneDrop = async (e, targetIndex) => {
+    e.preventDefault();
+    
+    const sourceItem = draggedItem();
+    if (!sourceItem) {
+      handleDragEnd();
+      return;
+    }
+    
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      let current = data.bookmarks;
+      
+      // Navigate to current folder
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      // Find source index
+      const sourceIndex = current.findIndex(item => 
+        item.name === sourceItem.name && 
+        (item.url === sourceItem.url || item.type === 'folder')
+      );
+      
+      if (sourceIndex === -1) {
+        console.error('Source item not found');
+        handleDragEnd();
+        return;
+      }
+      
+      const itemToMove = current[sourceIndex];
+      
+      // Remove from source position
+      current.splice(sourceIndex, 1);
+      
+      // Adjust target index if we're moving down in the same list
+      const adjustedIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+      
+      // Insert at target position
+      current.splice(adjustedIndex, 0, itemToMove);
+      
+      setBookmarks(data);
+      
+      // Update current view
+      let viewCurrent = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        const folder = viewCurrent[pathItem.index];
+        if (folder && folder.type === 'folder') {
+          viewCurrent = folder.children || [];
+        }
+      }
+      updateCurrentView(viewCurrent, currentPath());
+      
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error moving item: ' + err.message);
+    }
+    
+    handleDragEnd();
+  };
+
   return (
     <div class="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
       {/* Header */}
@@ -765,42 +839,60 @@ export default function BookmarksFullPage() {
                 />
               </Show>
               
-              {/* All items (folders and bookmarks) in original order */}
+              {/* Drop zone before first item */}
+              <Show when={!searchQuery().trim() && displayAllItems().length > 0}>
+                <DropZone
+                  isActive={dropZoneIndex() === 0}
+                  onDragOver={(e) => handleDropZoneDragOver(e, 0)}
+                  onDragLeave={handleDropZoneDragLeave}
+                  onDrop={(e) => handleDropZoneDrop(e, 0)}
+                />
+              </Show>
+              
+              {/* All items (folders and bookmarks) with drop zones between them */}
               <For each={displayAllItems()}>
                 {(item, index) => (
-                  <Show
-                    when={item.type === 'folder'}
-                    fallback={
-                      <BookmarkTile
-                        bookmark={item}
-                        onEdit={() => handleEdit(item, index(), false)}
-                        onDelete={() => handleDelete(index(), false)}
+                  <>
+                    <Show
+                      when={item.type === 'folder'}
+                      fallback={
+                        <BookmarkTile
+                          bookmark={item}
+                          onEdit={() => handleEdit(item, index(), false)}
+                          onDelete={() => handleDelete(index(), false)}
+                          draggable={!searchQuery().trim()}
+                          onDragStart={() => handleDragStart(item)}
+                          onDragEnd={handleDragEnd}
+                          isDragging={draggedItem() === item}
+                        />
+                      }
+                    >
+                      <FolderTile
+                        folder={item}
+                        onClick={() => handleFolderTileClick(item, index())}
+                        onEdit={() => handleEdit(item, index(), true)}
+                        onDelete={() => handleDelete(index(), true)}
                         draggable={!searchQuery().trim()}
                         onDragStart={() => handleDragStart(item)}
                         onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOver(e, item, false)}
+                        onDragOver={(e) => handleDragOver(e, item, true)}
                         onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, item, false)}
+                        onDrop={(e) => handleDrop(e, item, true)}
                         isDragging={draggedItem() === item}
-                        isDropTarget={dropTargetItem() === item && !dropOnFolder()}
+                        isDropTarget={dropTargetItem() === item && dropOnFolder()}
                       />
-                    }
-                  >
-                    <FolderTile
-                      folder={item}
-                      onClick={() => handleFolderTileClick(item, index())}
-                      onEdit={() => handleEdit(item, index(), true)}
-                      onDelete={() => handleDelete(index(), true)}
-                      draggable={!searchQuery().trim()}
-                      onDragStart={() => handleDragStart(item)}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={(e) => handleDragOver(e, item, true)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, item, true)}
-                      isDragging={draggedItem() === item}
-                      isDropTarget={dropTargetItem() === item && dropOnFolder()}
-                    />
-                  </Show>
+                    </Show>
+                    
+                    {/* Drop zone after each item */}
+                    <Show when={!searchQuery().trim()}>
+                      <DropZone
+                        isActive={dropZoneIndex() === index() + 1}
+                        onDragOver={(e) => handleDropZoneDragOver(e, index() + 1)}
+                        onDragLeave={handleDropZoneDragLeave}
+                        onDrop={(e) => handleDropZoneDrop(e, index() + 1)}
+                      />
+                    </Show>
+                  </>
                 )}
               </For>
             </div>
