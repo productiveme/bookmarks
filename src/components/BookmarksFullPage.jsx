@@ -1,5 +1,5 @@
 // BookmarksFullPage - Bookmarks Manager with sidebar and tile grid (REFACTORED)
-import { createSignal, Show, For, onMount } from 'solid-js';
+import { createSignal, Show, For, onMount, createEffect } from 'solid-js';
 import { getFolderList } from '../utils/yaml.js';
 import { useBookmarksData } from '../hooks/useBookmarksData.js';
 import { useBookmarksNavigation } from '../hooks/useBookmarksNavigation.js';
@@ -85,6 +85,13 @@ export default function BookmarksFullPage() {
   const [prefilledUrl, setPrefilledUrl] = createSignal('');
   const [selectedFolder, setSelectedFolder] = createSignal([]);
 
+  // Watch for bookmarks to load and initialize the view
+  createEffect(() => {
+    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0) {
+      updateCurrentView(bookmarks().bookmarks, []);
+    }
+  });
+  
   // Initialize bookmarks view after load
   onMount(() => {
     // Check if we came from a CSP-blocked page with page info
@@ -97,15 +104,12 @@ export default function BookmarksFullPage() {
       // Store pre-filled data
       setPrefilledName(decodeURIComponent(pageTitle));
       setPrefilledUrl(decodeURIComponent(pageUrl));
-
-      // Clean up URL parameters
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, '', cleanUrl);
-    }
-
-    // Initialize view when bookmarks load
-    if (configured() && bookmarks()?.bookmarks) {
-      updateCurrentView(bookmarks().bookmarks, []);
+      // Trigger modal to open after bookmarks are loaded
+      setTimeout(() => {
+        if (!loading()) {
+          setShowAddModal(true);
+        }
+      }, 500);
     }
   });
 
