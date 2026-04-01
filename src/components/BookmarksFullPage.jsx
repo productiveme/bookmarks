@@ -150,9 +150,14 @@ export default function BookmarksFullPage() {
     }
 
     try {
+      console.log('[DELETE] Starting delete - index:', index, 'isFolder:', isFolder);
+      console.log('[DELETE] Current path:', currentPath().map(p => `${p.name}[${p.index}]`).join(' / '));
+      
       // index is already correct from displayAllItems()
       const actualIndex = index;
       const path = [...currentPath().map(p => p.index), actualIndex];
+      
+      console.log('[DELETE] Computed delete path:', path);
       
       const updatedBookmarks = deleteBookmarkAtPath(bookmarks(), path);
       
@@ -166,10 +171,16 @@ export default function BookmarksFullPage() {
           current = folder.children || [];
         }
       }
+      
+      console.log('[DELETE] Updated current view, items count:', current.length);
+      
       updateCurrentView(current, currentPath());
       
       await saveBookmarks(updatedBookmarks);
+      
+      console.log('[DELETE] Successfully completed');
     } catch (err) {
+      console.error('[DELETE] Error:', err);
       alert('Error deleting: ' + err.message);
     }
   };
