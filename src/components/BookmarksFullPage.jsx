@@ -183,22 +183,50 @@ export default function BookmarksFullPage() {
     try {
       const { item, index, isFolder } = editingItem();
       
-      // For folders, just update in place
+      // For folders, check if parent folder changed
       if (isFolder) {
         const actualIndex = index;
-        const path = [...currentPath().map(p => p.index), actualIndex];
+        const currentItemPath = [...currentPath().map(p => p.index), actualIndex];
+        const newFolderPath = editedData.folderPath || [];
         
         const data = JSON.parse(JSON.stringify(bookmarks()));
         
-        let current = data.bookmarks;
-        for (let i = 0; i < path.length - 1; i++) {
-          current = current[path[i]].children;
-        }
+        // Check if we're moving to a different parent folder
+        const currentFolderPath = currentPath().map(p => p.index);
+        const isMoving = JSON.stringify(currentFolderPath) !== JSON.stringify(newFolderPath);
         
-        current[path[path.length - 1]] = {
-          ...item,
-          name: editedData.name
-        };
+        if (isMoving) {
+          // Delete from current location
+          let current = data.bookmarks;
+          for (let i = 0; i < currentItemPath.length - 1; i++) {
+            current = current[currentItemPath[i]].children;
+          }
+          const folderToMove = current[currentItemPath[currentItemPath.length - 1]];
+          current.splice(currentItemPath[currentItemPath.length - 1], 1);
+          
+          // Update name
+          folderToMove.name = editedData.name;
+          
+          // Add to new location
+          let target = data.bookmarks;
+          for (const idx of newFolderPath) {
+            if (target[idx] && target[idx].type === 'folder') {
+              target = target[idx].children;
+            }
+          }
+          target.push(folderToMove);
+        } else {
+          // Update in place
+          let current = data.bookmarks;
+          for (let i = 0; i < currentItemPath.length - 1; i++) {
+            current = current[currentItemPath[i]].children;
+          }
+          
+          current[currentItemPath[currentItemPath.length - 1]] = {
+            ...item,
+            name: editedData.name
+          };
+        }
         
         setBookmarks(data);
         
