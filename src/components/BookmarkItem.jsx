@@ -117,7 +117,7 @@ export default function BookmarkItem(props) {
             </svg>
           </button>
           <button
-            class="p-1 text-red-600 hover:text-red-700 transition-colors"
+            class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
             onClick={handleCancel}
             title="Cancel"
           >
@@ -126,7 +126,7 @@ export default function BookmarkItem(props) {
             </svg>
           </button>
           <button
-            class="p-1 text-[var(--color-text-secondary)] hover:text-red-600 transition-colors"
+            class="p-1 text-red-600 hover:text-red-700 transition-colors"
             onClick={handleDelete}
             title="Delete"
           >
