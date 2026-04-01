@@ -42,6 +42,17 @@ export function useBookmarkBarDragScroll() {
     scrollContainer.scrollLeft = scrollLeft() - walk;
   };
 
+  const scrollToEnd = () => {
+    if (!scrollContainer) return;
+    // Use setTimeout to ensure DOM has updated with new bookmark
+    setTimeout(() => {
+      scrollContainer.scrollTo({
+        left: scrollContainer.scrollWidth,
+        behavior: 'smooth'
+      });
+    }, 50);
+  };
+
   return {
     isDragging,
     setScrollContainerRef,
@@ -49,5 +60,6 @@ export function useBookmarkBarDragScroll() {
     handleMouseLeave,
     handleMouseUp,
     handleMouseMove,
+    scrollToEnd,
   };
 }

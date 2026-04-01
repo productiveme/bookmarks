@@ -2,7 +2,7 @@
 import { createSignal } from 'solid-js';
 import { deleteBookmarkAtPath } from '../utils/yaml.js';
 
-export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateUIAfterChange, saveBookmarks, addBookmarkToCurrentPath) {
+export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateUIAfterChange, saveBookmarks, addBookmarkToCurrentPath, scrollToEnd) {
   const [editingIndex, setEditingIndex] = createSignal(null);
   const [showFolderInput, setShowFolderInput] = createSignal(false);
   const [folderInputValue, setFolderInputValue] = createSignal('');
@@ -43,6 +43,9 @@ export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateU
       // Optimistic update - update UI immediately
       setBookmarks(updatedBookmarks);
       updateUIAfterChange(updatedBookmarks);
+      
+      // Scroll to show the new bookmark
+      scrollToEnd();
       
       // Save to Gist in background
       await saveBookmarks(updatedBookmarks, true);
@@ -85,6 +88,9 @@ export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateU
     updateUIAfterChange(updatedBookmarks);
     setShowFolderInput(false);
     setFolderInputValue('');
+    
+    // Scroll to show the new folder
+    scrollToEnd();
     
     // Save to Gist in background
     await saveBookmarks(updatedBookmarks, true);

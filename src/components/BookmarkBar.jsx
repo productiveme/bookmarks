@@ -62,6 +62,16 @@ export default function BookmarkBar(props) {
     }
   };
 
+  // Drag-to-scroll
+  const {
+    setScrollContainerRef,
+    handleMouseDown,
+    handleMouseLeave,
+    handleMouseUp,
+    handleMouseMove,
+    scrollToEnd,
+  } = useBookmarkBarDragScroll();
+
   // Edit operations
   const {
     editingIndex,
@@ -76,16 +86,7 @@ export default function BookmarkBar(props) {
     handleDelete,
     handleEdit,
     handleMove,
-  } = useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateUIAfterChange, saveBookmarks, addBookmarkToCurrentPath);
-
-  // Drag-to-scroll
-  const {
-    setScrollContainerRef,
-    handleMouseDown,
-    handleMouseLeave,
-    handleMouseUp,
-    handleMouseMove,
-  } = useBookmarkBarDragScroll();
+  } = useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateUIAfterChange, saveBookmarks, addBookmarkToCurrentPath, scrollToEnd);
 
   // Helper functions
   const getInitials = (name) => {

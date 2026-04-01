@@ -5,6 +5,7 @@ import FaviconImage from './FaviconImage.jsx';
 export default function BookmarkItem(props) {
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
   
   // Update edit values when item changes (e.g., after moving)
   createEffect(() => {
@@ -50,8 +51,19 @@ export default function BookmarkItem(props) {
   
   const handleDelete = (e) => {
     e.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+  
+  const handleConfirmDelete = (e) => {
+    e.stopPropagation();
     props.onDelete?.(props.index);
     props.onEditEnd?.();
+    setShowDeleteConfirm(false);
+  };
+  
+  const handleCancelDelete = (e) => {
+    e.stopPropagation();
+    setShowDeleteConfirm(false);
   };
   
   const handleMoveLeft = (e) => {
@@ -66,75 +78,98 @@ export default function BookmarkItem(props) {
   
   return (
     <Show 
-      when={!props.isEditing}
+      when={!props.isEditing && !showDeleteConfirm()}
       fallback={
-        <div class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
-          <button
-            class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            onClick={handleMoveLeft}
-            disabled={props.isFirst}
-            title="Move left"
-          >
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            onClick={handleMoveRight}
-            disabled={props.isLast}
-            title="Move right"
-          >
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <input
-            type="text"
-            value={editName()}
-            onInput={(e) => setEditName(e.target.value)}
-            placeholder="Name"
-            class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-32"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <Show when={props.item.type === 'link'}>
-            <input
-              type="text"
-              value={editUrl()}
-              onInput={(e) => setEditUrl(e.target.value)}
-              placeholder="URL"
-              class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-48"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Show>
-          <button
-            class="p-1 text-green-600 hover:text-green-700 transition-colors"
-            onClick={handleSave}
-            title="Save"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </button>
-          <button
-            class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
-            onClick={handleCancel}
-            title="Cancel"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <button
-            class="p-1 text-red-600 hover:text-red-700 transition-colors"
-            onClick={handleDelete}
-            title="Delete"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <Show
+          when={showDeleteConfirm()}
+          fallback={
+            <div class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
+              <button
+                class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                onClick={handleMoveLeft}
+                disabled={props.isFirst}
+                title="Move left"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                onClick={handleMoveRight}
+                disabled={props.isLast}
+                title="Move right"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <input
+                type="text"
+                value={editName()}
+                onInput={(e) => setEditName(e.target.value)}
+                placeholder="Name"
+                class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-32"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <Show when={props.item.type === 'link'}>
+                <input
+                  type="text"
+                  value={editUrl()}
+                  onInput={(e) => setEditUrl(e.target.value)}
+                  placeholder="URL"
+                  class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-48"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </Show>
+              <button
+                class="p-1 text-green-600 hover:text-green-700 transition-colors"
+                onClick={handleSave}
+                title="Save"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                onClick={handleCancel}
+                title="Cancel"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <button
+                class="p-1 text-red-600 hover:text-red-700 transition-colors"
+                onClick={handleDelete}
+                title="Delete"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          }
+        >
+          <div class="flex items-center gap-2 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
+            <span class="text-xs text-[var(--color-text-primary)]">
+              Delete {props.item.name}?
+            </span>
+            <button
+              class="px-2 py-0.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              onClick={handleConfirmDelete}
+            >
+              Delete
+            </button>
+            <button
+              class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+              onClick={handleCancelDelete}
+            >
+              Cancel
+            </button>
+          </div>
+        </Show>
       }
     >
       <div class="flex items-center gap-0.5 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
