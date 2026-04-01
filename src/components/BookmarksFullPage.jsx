@@ -150,8 +150,8 @@ export default function BookmarksFullPage() {
     }
 
     try {
-      const allItems = [...folders(), ...currentBookmarks()];
-      const actualIndex = isFolder ? index : folders().length + index;
+      // index is already correct from displayAllItems()
+      const actualIndex = index;
       const path = [...currentPath().map(p => p.index), actualIndex];
       
       const updatedBookmarks = deleteBookmarkAtPath(bookmarks(), path);
@@ -243,7 +243,7 @@ export default function BookmarksFullPage() {
         await saveBookmarks(data);
       } else {
         // For bookmarks, check if folder changed
-        const actualIndex = folders().length + index;
+        const actualIndex = index;  // index is already correct from displayAllItems()
         const currentItemPath = [...currentPath().map(p => p.index), actualIndex];
         const newFolderPath = editedData.folderPath || [];
         
@@ -529,6 +529,7 @@ export default function BookmarksFullPage() {
     setDraggedItem(null);
     setDropTargetItem(null);
     setDropOnFolder(false);
+    setDropZoneIndex(null);
   };
 
   const handleDragOver = (e, targetItem, isFolder) => {
