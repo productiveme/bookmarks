@@ -187,7 +187,7 @@ export default function BookmarksFullPage() {
         currentPath={currentPath()}
         onSearchInput={handleSearchInput}
         onClearSearch={handleClearSearch}
-        onRefresh={loadBookmarks}
+        onRefresh={() => navigateToBreadcrumb(-1)}
         onNavigateToBreadcrumb={navigateToBreadcrumb}
       />
 
