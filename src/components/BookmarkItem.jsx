@@ -1,10 +1,18 @@
 // BookmarkItem - Individual bookmark or folder
-import { Show, createSignal } from 'solid-js';
+import { Show, createSignal, createEffect } from 'solid-js';
 import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkItem(props) {
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
+  
+  // Update edit values when item changes (e.g., after moving)
+  createEffect(() => {
+    if (props.isEditing) {
+      setEditName(props.item.name);
+      setEditUrl(props.item.url || '');
+    }
+  });
   
   const handleClick = (e) => {
     // Don't trigger if editing
