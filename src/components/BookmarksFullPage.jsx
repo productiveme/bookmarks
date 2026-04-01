@@ -853,6 +853,7 @@ export default function BookmarksFullPage() {
             
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {/* Parent folder (..) - only show when not at root and not searching */}
+              {/* No drop zone before parent folder */}
               <Show when={currentPath().length > 0 && !searchQuery().trim()}>
                 <FolderTile
                   folder={{ name: '..', type: 'folder' }}
@@ -867,20 +868,29 @@ export default function BookmarksFullPage() {
                 />
               </Show>
               
-              {/* Drop zone before first item */}
-              <Show when={!searchQuery().trim() && displayAllItems().length > 0}>
-                <DropZone
-                  isActive={dropZoneIndex() === 0}
-                  onDragOver={(e) => handleDropZoneDragOver(e, 0)}
-                  onDragLeave={handleDropZoneDragLeave}
-                  onDrop={(e) => handleDropZoneDrop(e, 0)}
-                />
-              </Show>
-              
-              {/* All items (folders and bookmarks) with drop zones between them */}
+              {/* All items (folders and bookmarks) with drop zone before each */}
               <For each={displayAllItems()}>
                 {(item, index) => (
-                  <>
+                  <div class="relative">
+                    {/* Drop zone before this item */}
+                    <Show when={!searchQuery().trim()}>
+                      <div
+                        class="absolute -left-2 top-0 bottom-0 w-4 z-10 flex items-center justify-start"
+                        onDragOver={(e) => handleDropZoneDragOver(e, index())}
+                        onDragLeave={handleDropZoneDragLeave}
+                        onDrop={(e) => handleDropZoneDrop(e, index())}
+                      >
+                        <div 
+                          class="h-full w-1 bg-[var(--color-accent)] rounded-full transition-opacity"
+                          classList={{
+                            'opacity-0': dropZoneIndex() !== index(),
+                            'opacity-100': dropZoneIndex() === index(),
+                          }}
+                        ></div>
+                      </div>
+                    </Show>
+                    
+                    {/* The tile itself */}
                     <Show
                       when={item.type === 'folder'}
                       fallback={
@@ -910,19 +920,33 @@ export default function BookmarksFullPage() {
                         isDropTarget={dropTargetItem() === item && dropOnFolder()}
                       />
                     </Show>
-                    
-                    {/* Drop zone after each item */}
-                    <Show when={!searchQuery().trim()}>
-                      <DropZone
-                        isActive={dropZoneIndex() === index() + 1}
-                        onDragOver={(e) => handleDropZoneDragOver(e, index() + 1)}
-                        onDragLeave={handleDropZoneDragLeave}
-                        onDrop={(e) => handleDropZoneDrop(e, index() + 1)}
-                      />
-                    </Show>
-                  </>
+                  </div>
                 )}
               </For>
+              
+              {/* Phantom tile at the end for final drop position */}
+              <Show when={!searchQuery().trim() && displayAllItems().length > 0}>
+                <div class="relative">
+                  <div
+                    class="absolute -left-2 top-0 bottom-0 w-4 z-10 flex items-center justify-start"
+                    onDragOver={(e) => handleDropZoneDragOver(e, displayAllItems().length)}
+                    onDragLeave={handleDropZoneDragLeave}
+                    onDrop={(e) => handleDropZoneDrop(e, displayAllItems().length)}
+                  >
+                    <div 
+                      class="h-full w-1 bg-[var(--color-accent)] rounded-full transition-opacity"
+                      classList={{
+                        'opacity-0': dropZoneIndex() !== displayAllItems().length,
+                        'opacity-100': dropZoneIndex() === displayAllItems().length,
+                      }}
+                    ></div>
+                  </div>
+                  {/* Invisible phantom tile to hold space */}
+                  <div class="opacity-0 pointer-events-none bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4">
+                    <div class="h-20"></div>
+                  </div>
+                </div>
+              </Show>
             </div>
           </div>
         </Show>

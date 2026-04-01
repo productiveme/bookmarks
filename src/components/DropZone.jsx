@@ -1,4 +1,4 @@
-// DropZone - Small drop target between items for reordering
+// DropZone - Visual drop indicator overlaid on tile edges for reordering
 export default function DropZone(props) {
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -14,22 +14,18 @@ export default function DropZone(props) {
 
   return (
     <div
-      class="relative flex items-center justify-center transition-all"
+      class="absolute left-0 top-0 bottom-0 w-8 z-10 flex items-center justify-start transition-opacity"
       classList={{
-        'w-2': !props.isActive,
-        'w-8': props.isActive,
+        'opacity-0 pointer-events-none': !props.isActive,
+        'opacity-100': props.isActive,
       }}
       onDragOver={handleDragOver}
       onDragLeave={props.onDragLeave}
       onDrop={handleDrop}
     >
-      {/* Visual indicator when hovering */}
+      {/* Visual line indicator */}
       <div 
-        class="h-full w-1 bg-[var(--color-accent)] rounded-full transition-all"
-        classList={{
-          'opacity-0 scale-y-50': !props.isActive,
-          'opacity-100 scale-y-100': props.isActive,
-        }}
+        class="h-full w-1 bg-[var(--color-accent)] rounded-full"
       ></div>
     </div>
   );
