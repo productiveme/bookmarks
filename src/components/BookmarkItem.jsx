@@ -14,16 +14,10 @@ export default function BookmarkItem(props) {
     }
   });
   
-  const handleClick = (e) => {
+  const handleFolderClick = (e) => {
     // Don't trigger if editing
     if (props.isEditing) return;
-    
-    if (props.item.type === 'folder') {
-      props.onFolderClick?.(props.item, props.index);
-    } else {
-      // Open link in new tab
-      window.open(props.item.url, '_blank');
-    }
+    props.onFolderClick?.(props.item, props.index);
   };
   
   const handleEditClick = (e) => {
@@ -144,33 +138,46 @@ export default function BookmarkItem(props) {
       }
     >
       <div class="flex items-center gap-0.5 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
-        <button
-          class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0"
-          onClick={handleClick}
-          title={props.item.type === 'link' ? props.item.url : `Open ${props.item.name}`}
+        <Show 
+          when={props.item.type === 'folder'}
+          fallback={
+            <a
+              href={props.item.url}
+              target="_parent"
+              class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 no-underline"
+              classList={{ 'pointer-events-none': props.isEditing }}
+              title={props.item.url}
+              onClick={(e) => {
+                if (props.isEditing) e.preventDefault();
+              }}
+            >
+              <FaviconImage 
+                url={props.item.url}
+                class="w-3.5 h-3.5 flex-shrink-0"
+                fallbackIcon={
+                  <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                }
+              />
+              <span class="truncate">{props.item.name}</span>
+            </a>
+          }
         >
-          <Show when={props.item.type === 'folder'} fallback={
-            <FaviconImage 
-              url={props.item.url}
-              class="w-3.5 h-3.5 flex-shrink-0"
-              fallbackIcon={
-                <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-              }
-            />
-          }>
+          <button
+            class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0"
+            onClick={handleFolderClick}
+            title={`Open ${props.item.name}`}
+          >
             <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
-          </Show>
-          <span class="truncate">{props.item.name}</span>
-          <Show when={props.item.type === 'folder'}>
+            <span class="truncate">{props.item.name}</span>
             <svg class="w-3 h-3 text-[var(--color-text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-          </Show>
-        </button>
+          </button>
+        </Show>
         
         <button
           class="px-0.5 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors leading-none flex-shrink-0"
