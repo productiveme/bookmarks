@@ -11,16 +11,13 @@ export default function BookmarkBar(props) {
   const [loading, setLoading] = createSignal(true);
   const [error, setError] = createSignal(null);
   const [configured, setConfigured] = createSignal(false);
-  const [showAddMenu, setShowAddMenu] = createSignal(false);
   const [showSearch, setShowSearch] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal('');
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
   
-  // Custom input modal state
-  const [showInputModal, setShowInputModal] = createSignal(false);
-  const [inputValue, setInputValue] = createSignal('');
-  const [inputPlaceholder, setInputPlaceholder] = createSignal('');
-  const [inputCallback, setInputCallback] = createSignal(null);
+  // Inline folder creation state
+  const [showFolderInput, setShowFolderInput] = createSignal(false);
+  const [folderInputValue, setFolderInputValue] = createSignal('');
   
   // Drag-to-scroll state
   let scrollContainer;
@@ -55,29 +52,6 @@ export default function BookmarkBar(props) {
     // Also check after a short delay in case localStorage wasn't ready
     setTimeout(checkConfig, 200);
   });
-  
-  // Custom input modal helpers
-  const showInput = (placeholder, callback) => {
-    setInputPlaceholder(placeholder);
-    setInputValue('');
-    setInputCallback(() => callback);
-    setShowInputModal(true);
-  };
-  
-  const handleInputSubmit = () => {
-    const callback = inputCallback();
-    const value = inputValue().trim();
-    setShowInputModal(false);
-    setInputValue('');
-    if (value && callback) {
-      callback(value);
-    }
-  };
-  
-  const handleInputCancel = () => {
-    setShowInputModal(false);
-    setInputValue('');
-  };
   
   const loadBookmarks = async () => {
     console.log('loadBookmarks called. Configured:', configured());
@@ -182,25 +156,45 @@ export default function BookmarkBar(props) {
   };
   
   const handleAddFolder = () => {
-    console.log('handleAddFolder called');
-    showInput('Enter folder name', (folderName) => {
-      console.log('Folder name entered:', folderName);
-      
-      const newFolder = {
-        name: folderName,
-        type: 'folder',
-        children: []
-      };
-      
-      const updatedBookmarks = addBookmarkToCurrentPath(newFolder);
-      
-      // Optimistic update - update UI immediately
-      updateUIAfterChange(updatedBookmarks);
-      setShowAddMenu(false);
-      
-      // Save to Gist in background
-      saveBookmarks(updatedBookmarks, true);
-    });
+    console.log('handleAddFolder called - showing inline input');
+    setShowFolderInput(true);
+    setFolderInputValue('');
+    // Focus the input after it's rendered
+    setTimeout(() => {
+      const input = document.getElementById('inline-folder-input');
+      if (input) input.focus();
+    }, 10);
+  };
+  
+  const handleFolderInputSave = () => {
+    const folderName = folderInputValue().trim();
+    if (!folderName) {
+      setShowFolderInput(false);
+      return;
+    }
+    
+    console.log('Creating folder:', folderName);
+    
+    const newFolder = {
+      name: folderName,
+      type: 'folder',
+      children: []
+    };
+    
+    const updatedBookmarks = addBookmarkToCurrentPath(newFolder);
+    
+    // Optimistic update - update UI immediately
+    updateUIAfterChange(updatedBookmarks);
+    setShowFolderInput(false);
+    setFolderInputValue('');
+    
+    // Save to Gist in background
+    saveBookmarks(updatedBookmarks, true);
+  };
+  
+  const handleFolderInputCancel = () => {
+    setShowFolderInput(false);
+    setFolderInputValue('');
   };
   
   const addBookmarkToCurrentPath = (newItem) => {
@@ -505,6 +499,58 @@ export default function BookmarkBar(props) {
           </For>
         </div>
         
+        {/* Inline folder creation */}
+        <Show 
+          when={!showFolderInput()}
+          fallback={
+            <div class="flex items-center gap-1 shrink-0">
+              <input
+                id="inline-folder-input"
+                type="text"
+                value={folderInputValue()}
+                onInput={(e) => setFolderInputValue(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleFolderInputSave();
+                  } else if (e.key === 'Escape') {
+                    handleFolderInputCancel();
+                  }
+                }}
+                placeholder="Folder name..."
+                class="px-2 py-1 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-32"
+              />
+              <button
+                onClick={handleFolderInputSave}
+                title="Save folder"
+                class="p-1 text-green-600 hover:text-green-700 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button
+                onClick={handleFolderInputCancel}
+                title="Cancel"
+                class="p-1 text-red-600 hover:text-red-700 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          }
+        >
+          <button
+            class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors shrink-0"
+            onClick={handleAddFolder}
+            title="Add new folder"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </Show>
+        
         <div class="w-px h-6 bg-[var(--color-border)]"></div>
         
         {/* Search */}
@@ -571,95 +617,18 @@ export default function BookmarkBar(props) {
           </For>
         </div>
         
-        {/* Add buttons */}
-        <Show 
-          when={!showAddMenu()}
-          fallback={
-            <div class="flex items-center gap-1 shrink-0">
-              <button
-                class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
-                onClick={handleAddCurrentPage}
-                title="Add current page as bookmark"
-              >
-                <span class="hidden sm:inline">Page</span>
-                <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              </button>
-              <button
-                class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
-                onClick={() => {
-                  console.log('Folder button clicked!');
-                  handleAddFolder();
-                }}
-                title="Add new folder"
-              >
-                <span class="hidden sm:inline">Folder</span>
-                <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-              </button>
-              <button
-                class="px-2 py-1 text-xs bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors whitespace-nowrap"
-                onClick={() => setShowAddMenu(false)}
-                title="Cancel"
-              >
-                <span class="hidden sm:inline">Cancel</span>
-                <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          }
-        >
-          <div class="shrink-0">
-            <button
-              class="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-              onClick={() => setShowAddMenu(true)}
-            >
-              <span class="hidden sm:inline">+ Add</span>
-              <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
-        </Show>
-      </Show>
-      
-      {/* Custom Input Modal */}
-      <Show when={showInputModal()}>
-        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-sm w-full p-4 border border-[var(--color-border)]">
-            <input
-              type="text"
-              value={inputValue()}
-              onInput={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleInputSubmit();
-                } else if (e.key === 'Escape') {
-                  handleInputCancel();
-                }
-              }}
-              placeholder={inputPlaceholder()}
-              class="w-full px-3 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-sm"
-              autofocus
-            />
-            <div class="flex gap-2 mt-3">
-              <button
-                onClick={handleInputSubmit}
-                class="flex-1 px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-              >
-                OK
-              </button>
-              <button
-                onClick={handleInputCancel}
-                class="flex-1 px-3 py-1.5 text-sm bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+        {/* Add bookmark button */}
+        <div class="shrink-0">
+          <button
+            class="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+            onClick={handleAddCurrentPage}
+            title="Add current page as bookmark"
+          >
+            <span class="hidden sm:inline">+ Add</span>
+            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
         </div>
       </Show>
     </div>
