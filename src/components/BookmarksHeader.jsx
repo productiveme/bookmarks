@@ -1,5 +1,6 @@
 // BookmarksHeader - Header with title, search, breadcrumbs, and refresh
 import { Show, For } from 'solid-js';
+import HomeIcon from './HomeIcon.jsx';
 
 export default function BookmarksHeader(props) {
   return (
@@ -55,11 +56,11 @@ export default function BookmarksHeader(props) {
       <Show when={!props.loading && props.configured}>
         <div class="max-w-[1920px] mx-auto mt-3 flex items-center gap-2 text-sm flex-wrap">
           <button
-            class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors whitespace-nowrap flex items-center gap-1"
+            class="p-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors"
             onClick={props.onRefresh}
             title="Reload bookmarks from Gist"
           >
-            📚 Home
+            <HomeIcon size="w-5 h-5" />
           </button>
           <For each={props.currentPath}>
             {(pathItem, i) => (
