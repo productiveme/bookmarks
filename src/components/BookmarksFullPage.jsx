@@ -85,9 +85,9 @@ export default function BookmarksFullPage() {
   const [prefilledUrl, setPrefilledUrl] = createSignal('');
   const [selectedFolder, setSelectedFolder] = createSignal([]);
 
-  // Watch for bookmarks to load and initialize the view
+  // Watch for bookmarks to load and initialize the view (only at root)
   createEffect(() => {
-    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0) {
+    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
       updateCurrentView(bookmarks().bookmarks, []);
     }
   });

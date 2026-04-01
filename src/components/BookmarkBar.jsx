@@ -26,14 +26,15 @@ export default function BookmarkBar(props) {
     currentBookmarks,
     setCurrentBookmarks,
     navigateToFolder,
+    navigateToFolderFromSearch,
     navigateToBreadcrumb,
     updateUIAfterChange,
     addBookmarkToCurrentPath,
   } = useBookmarkBarNavigation(bookmarks, loadBookmarks);
 
-  // Watch for bookmarks to load and initialize the view
+  // Watch for bookmarks to load and initialize the view (only at root)
   createEffect(() => {
-    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0) {
+    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
       setCurrentBookmarks(bookmarks().bookmarks);
     }
   });
@@ -47,6 +48,19 @@ export default function BookmarkBar(props) {
     handleSearchClear,
     displayBookmarks,
   } = useBookmarkBarSearch(bookmarks, currentBookmarks);
+
+  // Handle folder clicks - use different navigation based on search state
+  const handleFolderClick = (folder, index) => {
+    if (searchQuery().trim()) {
+      // When searching, find the full path to the folder
+      navigateToFolderFromSearch(folder);
+      // Clear search after navigation
+      handleSearchClear();
+    } else {
+      // When browsing normally, navigate using the index
+      navigateToFolder(folder, index);
+    }
+  };
 
   // Edit operations
   const {
@@ -209,7 +223,7 @@ export default function BookmarkBar(props) {
                 isEditing={editingIndex() === index()}
                 onEditStart={() => setEditingIndex(index())}
                 onEditEnd={() => setEditingIndex(null)}
-                onFolderClick={navigateToFolder}
+                onFolderClick={handleFolderClick}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 onMove={handleMove}

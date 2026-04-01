@@ -5,12 +5,17 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
 ## Features
 
 - 📚 **Bookmarklet-based**: Add a bookmark bar to any webpage with one click
-- 🗂️ **Folders & Subfolders**: Organize bookmarks hierarchically
+- 🗂️ **Folders & Subfolders**: Organize bookmarks hierarchically with unlimited nesting
+- 🔍 **Global Search**: Search across all bookmarks and folders recursively
 - ➕ **Quick Add**: Easily add the current page to your bookmarks
+- ✏️ **Inline Editing**: Edit bookmark names and URLs directly in the interface
+- 🎯 **Drag & Drop**: Reorder bookmarks and move them between folders (full manager)
+- 🖱️ **Drag to Scroll**: Horizontal mouse-drag scrolling in the compact bar
 - 🔄 **GitHub Gist Sync**: Your bookmarks are stored in a private GitHub Gist
 - 🌓 **Light/Dark Theme**: Automatically follows system preferences
-- 🔒 **Privacy-focused**: Data stored in your own GitHub Gist
-- 🎨 **Minimal Design**: Clean, unobtrusive interface
+- 🔒 **Privacy-focused**: Data stored in your own GitHub Gist, no backend database
+- 🎨 **Minimal Design**: Clean, unobtrusive 40px height interface
+- 📱 **Two Views**: Compact bar (40px) for browsing, full manager for organization
 
 ## Tech Stack
 
@@ -132,14 +137,30 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
 /
 ├── src/
 │   ├── components/
-│   │   ├── BookmarkBar.jsx     # Main bookmark bar with breadcrumbs
-│   │   ├── BookmarkItem.jsx    # Individual bookmark/folder component
-│   │   └── ConfigModal.jsx     # Setup modal for GitHub config
+│   │   ├── BookmarkBar.jsx          # Compact 40px bar for bookmarklet
+│   │   ├── BookmarksFullPage.jsx    # Full-page bookmark manager
+│   │   ├── BookmarksHeader.jsx      # Header with breadcrumbs
+│   │   ├── BookmarksSidebar.jsx     # Folder navigation sidebar
+│   │   ├── BookmarkItem.jsx         # Individual bookmark/folder component
+│   │   ├── ConfigModal.jsx          # Setup modal for GitHub config
+│   │   └── HomeIcon.jsx             # Reusable home icon component
+│   ├── hooks/
+│   │   ├── useBookmarkBarData.js         # Data loading for bar
+│   │   ├── useBookmarkBarNavigation.js   # Navigation for bar
+│   │   ├── useBookmarkBarSearch.js       # Search for bar
+│   │   ├── useBookmarkBarEdit.js         # CRUD operations for bar
+│   │   ├── useBookmarkBarDragScroll.js   # Horizontal scroll for bar
+│   │   ├── useBookmarksData.js           # Data loading for full page
+│   │   ├── useBookmarksNavigation.js     # Navigation for full page
+│   │   ├── useBookmarksSearch.js         # Search for full page
+│   │   ├── useBookmarksCRUD.js           # CRUD operations for full page
+│   │   └── useBookmarksDragDrop.js       # Drag-drop reorder for full page
 │   ├── layouts/
 │   │   └── Layout.astro        # Base HTML layout
 │   ├── pages/
 │   │   ├── index.astro         # Landing page with instructions
 │   │   ├── bar.astro           # Bookmark bar iframe view
+│   │   ├── manager.astro       # Full-page manager view
 │   │   ├── setup.astro         # Configuration page
 │   │   └── api/
 │   │       ├── bookmarks.js    # GET/POST bookmark data
@@ -243,15 +264,24 @@ Some websites have strict Content Security Policy (CSP) settings that block thir
 - Click the bookmarklet on any webpage to toggle the bookmark bar
 - The bar appears at the top of the page, pushing content down
 - Click folders to navigate deeper
-- Click bookmarks to open them in a new tab
+- Click bookmarks to navigate to them in the current tab
 - Use the breadcrumb trail to navigate back
+- Click the home icon or title to reload from Gist and return to root
 
 ### Adding Bookmarks
 
+**In the Bookmark Bar (40px compact view)**:
 1. Navigate to the folder where you want to add a bookmark
-2. Click the "+ Add" button
-3. Select "Add Current Page" to bookmark the current page
-4. Or select "Add Folder" to create a new folder
+2. Click the "+" button
+3. A menu appears with two options:
+   - **"Add Page"** - Adds the current webpage to your bookmarks
+   - **"New Folder"** - Creates a new folder (inline input appears)
+
+**In the Full Manager (manager.astro)**:
+1. Navigate to the desired folder
+2. Click the "+ Add Bookmark" or "+ Add Folder" button
+3. Fill in the details in the modal
+4. Click "Save"
 
 ## YAML Format
 
@@ -301,18 +331,30 @@ bookmarks:
 - Communication between bookmarklet and iframe uses `postMessage`
 - Always use HTTPS in production
 
+## Implemented Features
+
+All core features are now implemented:
+
+- ✅ **Edit/delete existing bookmarks** - Inline editing and delete buttons
+- ✅ **Drag-and-drop reordering** - Full drag-drop support in manager view
+- ✅ **Search/filter bookmarks** - Global recursive search across entire tree
+- ✅ **Keyboard shortcuts** - Enter to save, Escape to cancel editing
+- ✅ **Drag-to-scroll** - Mouse drag horizontal scrolling in compact bar
+- ✅ **Breadcrumb navigation** - Click any breadcrumb to jump to that folder
+- ✅ **Parent folder navigation** - ".." folder in sidebar to go up one level
+- ✅ **Optimistic updates** - UI updates immediately, syncs to Gist in background
+
 ## Future Enhancements
 
 Potential features to add:
 
-- [ ] Edit/delete existing bookmarks
-- [ ] Drag-and-drop reordering
-- [ ] Search/filter bookmarks
 - [ ] Import from browser bookmarks
-- [ ] Export bookmarks
-- [ ] Keyboard shortcuts
+- [ ] Export bookmarks to HTML/JSON
 - [ ] Bookmark icons/favicons
 - [ ] Multi-device sync status indicator
+- [ ] Offline support with service workers
+- [ ] Bookmark tags/labels
+- [ ] Recently visited bookmarks
 
 ## License
 
