@@ -100,16 +100,10 @@ export default function BookmarksFullPage() {
     const pageTitle = params.get('title');
     const pageUrl = params.get('url');
 
-    if (fromPage === '1' && pageTitle && pageUrl && configured()) {
-      // Store pre-filled data
+    // Store pre-filled data if coming from a page, but don't auto-open modal
+    if (fromPage === '1' && pageTitle && pageUrl) {
       setPrefilledName(decodeURIComponent(pageTitle));
       setPrefilledUrl(decodeURIComponent(pageUrl));
-      // Trigger modal to open after bookmarks are loaded
-      setTimeout(() => {
-        if (!loading()) {
-          setShowAddModal(true);
-        }
-      }, 500);
     }
   });
 
