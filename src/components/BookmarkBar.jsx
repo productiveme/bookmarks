@@ -233,22 +233,6 @@ export default function BookmarkBar(props) {
           </For>
         </div>
         
-        {/* Add bookmark button */}
-        <div class="shrink-0">
-          <button
-            class="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-            onClick={handleAddCurrentPage}
-            title="Add current page as bookmark"
-          >
-            <span class="hidden sm:inline">+ Add</span>
-            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-        </div>
-        
-        <div class="w-px h-6 bg-[var(--color-border)]"></div>
-        
         {/* Search */}
         <Show 
           when={!showSearch()}
@@ -284,6 +268,22 @@ export default function BookmarkBar(props) {
             </svg>
           </button>
         </Show>
+        
+        <div class="w-px h-6 bg-[var(--color-border)]"></div>
+        
+        {/* Add bookmark button */}
+        <div class="shrink-0">
+          <button
+            class="px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+            onClick={handleAddCurrentPage}
+            title="Add current page as bookmark"
+          >
+            <span class="hidden sm:inline">+ Add</span>
+            <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
       </Show>
     </div>
   );

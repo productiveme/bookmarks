@@ -78,7 +78,18 @@ export default function BookmarkItem(props) {
   
   const handleCancel = (e) => {
     e.stopPropagation();
+    setShowDeleteConfirm(false);
     props.onEditEnd?.();
+  };
+  
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave(e);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel(e);
+    }
   };
   
   const handleDelete = (e) => {
@@ -108,6 +119,12 @@ export default function BookmarkItem(props) {
     props.onMove?.(props.index, 1); // Move down (right) in the list
   };
   
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleSave(e);
+  };
+  
   return (
     <Show 
       when={!props.isEditing && !showDeleteConfirm()}
@@ -115,8 +132,12 @@ export default function BookmarkItem(props) {
         <Show
           when={showDeleteConfirm()}
           fallback={
-            <div class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
+            <form 
+              onSubmit={handleFormSubmit}
+              class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]"
+            >
               <button
+                type="button"
                 class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 onClick={handleMoveLeft}
                 disabled={props.isFirst}
@@ -127,6 +148,7 @@ export default function BookmarkItem(props) {
                 </svg>
               </button>
               <button
+                type="button"
                 class="px-1 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 onClick={handleMoveRight}
                 disabled={props.isLast}
@@ -155,8 +177,8 @@ export default function BookmarkItem(props) {
                 />
               </Show>
               <button
+                type="submit"
                 class="p-1 text-green-600 hover:text-green-700 transition-colors"
-                onClick={handleSave}
                 title="Save"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,6 +186,7 @@ export default function BookmarkItem(props) {
                 </svg>
               </button>
               <button
+                type="button"
                 class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
                 onClick={handleCancel}
                 title="Cancel"
@@ -173,6 +196,7 @@ export default function BookmarkItem(props) {
                 </svg>
               </button>
               <button
+                type="button"
                 class="p-1 text-red-600 hover:text-red-700 transition-colors"
                 onClick={handleDelete}
                 title="Delete"
@@ -181,7 +205,7 @@ export default function BookmarkItem(props) {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
-            </div>
+            </form>
           }
         >
           <div class="flex items-center gap-2 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
