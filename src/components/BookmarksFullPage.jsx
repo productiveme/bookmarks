@@ -28,6 +28,11 @@ export default function BookmarksFullPage() {
   const [prefilledName, setPrefilledName] = createSignal('');
   const [prefilledUrl, setPrefilledUrl] = createSignal('');
   const [selectedFolder, setSelectedFolder] = createSignal([]);
+  
+  // Drag and drop state
+  const [draggedItem, setDraggedItem] = createSignal(null);
+  const [dropTargetItem, setDropTargetItem] = createSignal(null);
+  const [dropOnFolder, setDropOnFolder] = createSignal(false);
 
   onMount(() => {
     const token = getGithubToken();
@@ -82,13 +87,13 @@ export default function BookmarksFullPage() {
   };
 
   const updateCurrentView = (items, path) => {
-    // Separate folders and links
-    const folderItems = items.filter(item => item.type === 'folder');
-    const linkItems = items.filter(item => item.type === 'link');
-    
-    setFolders(folderItems);
-    setCurrentBookmarks(linkItems);
+    // Keep all items together in original order
+    setCurrentBookmarks(items);
     setCurrentPath(path);
+    
+    // Still extract folders for sidebar
+    const folderItems = items.filter(item => item.type === 'folder');
+    setFolders(folderItems);
   };
 
   const navigateToFolder = (folder, index) => {
@@ -355,12 +360,13 @@ export default function BookmarksFullPage() {
     return currentBookmarks();
   };
 
-  const displayFolders = () => {
+  const displayAllItems = () => {
+    // When searching, show folders and bookmarks separately
     if (searchQuery().trim()) {
-      return filteredFolders();
+      return [...filteredFolders(), ...filteredBookmarks()];
     }
-    // Show current folders as tiles when not searching
-    return folders();
+    // When browsing, show all items in original order
+    return currentBookmarks();
   };
 
   const handleAddFolder = async () => {
@@ -484,6 +490,189 @@ export default function BookmarksFullPage() {
     setPrefilledUrl('');
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (item) => {
+    setDraggedItem(item);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDropTargetItem(null);
+    setDropOnFolder(false);
+  };
+
+  const handleDragOver = (e, targetItem, isFolder) => {
+    e.preventDefault();
+    setDropTargetItem(targetItem);
+    setDropOnFolder(isFolder);
+  };
+
+  const handleDragLeave = () => {
+    setDropTargetItem(null);
+    setDropOnFolder(false);
+  };
+
+  const handleDrop = async (e, targetItem, targetIsFolder) => {
+    e.preventDefault();
+    
+    const sourceItem = draggedItem();
+    
+    if (!sourceItem || !targetItem || sourceItem === targetItem) {
+      handleDragEnd();
+      return;
+    }
+    
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      let current = data.bookmarks;
+      
+      // Navigate to current folder
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      // Find source index
+      const sourceIndex = current.findIndex(item => 
+        item.name === sourceItem.name && 
+        (item.url === sourceItem.url || item.type === 'folder')
+      );
+      
+      if (sourceIndex === -1) {
+        console.error('Source item not found');
+        handleDragEnd();
+        return;
+      }
+      
+      const itemToMove = current[sourceIndex];
+      
+      // Case 1: Dropping onto a folder - move item into folder
+      if (targetIsFolder) {
+        const targetIndex = current.findIndex(item => 
+          item.name === targetItem.name && item.type === 'folder'
+        );
+        
+        if (targetIndex === -1) {
+          console.error('Target folder not found');
+          handleDragEnd();
+          return;
+        }
+        
+        const targetFolder = current[targetIndex];
+        
+        // Remove from current location
+        current.splice(sourceIndex, 1);
+        
+        // Add to target folder
+        if (!targetFolder.children) {
+          targetFolder.children = [];
+        }
+        targetFolder.children.push(itemToMove);
+      }
+      // Case 2: Dropping next to another item - reorder
+      else {
+        const targetIndex = current.findIndex(item => 
+          item.name === targetItem.name && 
+          (item.url === targetItem.url || item.type === 'folder')
+        );
+        
+        if (targetIndex === -1) {
+          console.error('Target item not found');
+          handleDragEnd();
+          return;
+        }
+        
+        // Remove from source position
+        current.splice(sourceIndex, 1);
+        
+        // Adjust target index if we're moving down in the same list
+        const adjustedIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        
+        // Insert at target position
+        current.splice(adjustedIndex, 0, itemToMove);
+      }
+      
+      setBookmarks(data);
+      
+      // Update current view
+      let viewCurrent = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        const folder = viewCurrent[pathItem.index];
+        if (folder && folder.type === 'folder') {
+          viewCurrent = folder.children || [];
+        }
+      }
+      updateCurrentView(viewCurrent, currentPath());
+      
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error moving item: ' + err.message);
+    }
+    
+    handleDragEnd();
+  };
+
+  const handleNavigateUp = async () => {
+    // Navigate back to parent folder
+    // Same as clicking the last breadcrumb minus one
+    await navigateToBreadcrumb(currentPath().length - 2);
+  };
+
+  const handleDragOverParent = (e) => {
+    e.preventDefault();
+    setDropTargetItem({ name: '..' });
+    setDropOnFolder(true);
+  };
+
+  const handleDropOnParent = async (e) => {
+    e.preventDefault();
+    
+    const sourceItem = draggedItem();
+    if (!sourceItem) {
+      handleDragEnd();
+      return;
+    }
+    
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      // Navigate to current folder
+      let current = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      // Find and remove source item from current folder
+      const sourceIndex = current.findIndex(item => 
+        item.name === sourceItem.name && 
+        (item.url === sourceItem.url || item.type === 'folder')
+      );
+      
+      if (sourceIndex === -1) {
+        handleDragEnd();
+        return;
+      }
+      
+      const itemToMove = current[sourceIndex];
+      current.splice(sourceIndex, 1);
+      
+      // Navigate to parent folder and add item there
+      let parent = data.bookmarks;
+      for (let i = 0; i < currentPath().length - 1; i++) {
+        parent = parent[currentPath()[i].index].children;
+      }
+      
+      parent.push(itemToMove);
+      
+      setBookmarks(data);
+      updateCurrentView(current, currentPath());
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error moving item: ' + err.message);
+    }
+    
+    handleDragEnd();
+  };
+
   return (
     <div class="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
       {/* Header */}
@@ -552,7 +741,7 @@ export default function BookmarksFullPage() {
               </Show>
             </div>
             
-            <Show when={displayBookmarks().length === 0 && displayFolders().length === 0}>
+            <Show when={displayBookmarks().length === 0 && displayFolders().length === 0 && currentPath().length === 0}>
               <div class="text-center py-12">
                 <p class="text-[var(--color-text-secondary)]">
                   {searchQuery().trim() ? 'No results found' : 'No bookmarks in this folder'}
@@ -561,24 +750,57 @@ export default function BookmarksFullPage() {
             </Show>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {/* Folder tiles */}
-              <For each={displayFolders()}>
-                {(folder, index) => (
-                  <FolderTile
-                    folder={folder}
-                    onClick={() => handleFolderTileClick(folder, index())}
-                  />
-                )}
-              </For>
+              {/* Parent folder (..) - only show when not at root and not searching */}
+              <Show when={currentPath().length > 0 && !searchQuery().trim()}>
+                <FolderTile
+                  folder={{ name: '..', type: 'folder' }}
+                  isParentFolder={true}
+                  onClick={handleNavigateUp}
+                  draggable={false}
+                  onDragOver={(e) => handleDragOverParent(e)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDropOnParent(e)}
+                  isDragging={false}
+                  isDropTarget={dropTargetItem()?.name === '..' }
+                />
+              </Show>
               
-              {/* Bookmark tiles */}
-              <For each={displayBookmarks()}>
-                {(bookmark, index) => (
-                  <BookmarkTile
-                    bookmark={bookmark}
-                    onEdit={() => handleEdit(bookmark, index(), false)}
-                    onDelete={() => handleDelete(index(), false)}
-                  />
+              {/* All items (folders and bookmarks) in original order */}
+              <For each={displayAllItems()}>
+                {(item, index) => (
+                  <Show
+                    when={item.type === 'folder'}
+                    fallback={
+                      <BookmarkTile
+                        bookmark={item}
+                        onEdit={() => handleEdit(item, index(), false)}
+                        onDelete={() => handleDelete(index(), false)}
+                        draggable={!searchQuery().trim()}
+                        onDragStart={() => handleDragStart(item)}
+                        onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOver(e, item, false)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, item, false)}
+                        isDragging={draggedItem() === item}
+                        isDropTarget={dropTargetItem() === item && !dropOnFolder()}
+                      />
+                    }
+                  >
+                    <FolderTile
+                      folder={item}
+                      onClick={() => handleFolderTileClick(item, index())}
+                      onEdit={() => handleEdit(item, index(), true)}
+                      onDelete={() => handleDelete(index(), true)}
+                      draggable={!searchQuery().trim()}
+                      onDragStart={() => handleDragStart(item)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => handleDragOver(e, item, true)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, item, true)}
+                      isDragging={draggedItem() === item}
+                      isDropTarget={dropTargetItem() === item && dropOnFolder()}
+                    />
+                  </Show>
                 )}
               </For>
             </div>

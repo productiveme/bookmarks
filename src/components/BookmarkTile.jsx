@@ -4,16 +4,49 @@ import FaviconImage from './FaviconImage.jsx';
 export default function BookmarkTile(props) {
   const handleEdit = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     props.onEdit();
   };
 
   const handleDelete = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     props.onDelete();
   };
 
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    props.onDragStart?.(e);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.onDragOver?.(e);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.onDrop?.(e);
+  };
+
   return (
-    <div class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-shadow">
+    <div 
+      class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-move"
+      classList={{
+        'opacity-50': props.isDragging,
+        'ring-2 ring-[var(--color-accent)]': props.isDropTarget,
+        'cursor-grab': props.draggable,
+        'cursor-grabbing': props.isDragging,
+      }}
+      draggable={props.draggable}
+      onDragStart={handleDragStart}
+      onDragEnd={props.onDragEnd}
+      onDragOver={handleDragOver}
+      onDragLeave={props.onDragLeave}
+      onDrop={handleDrop}
+    >
       <div class="flex items-start justify-between mb-2">
         <FaviconImage 
           url={props.bookmark.url}
