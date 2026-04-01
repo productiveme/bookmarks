@@ -1,5 +1,5 @@
 // BookmarkBar - Main bar with breadcrumbs and scrollable bookmarks (REFACTORED)
-import { Show, For } from 'solid-js';
+import { Show, For, createEffect } from 'solid-js';
 import BookmarkItem from './BookmarkItem';
 import HomeIcon from './HomeIcon.jsx';
 import { useBookmarkBarData } from '../hooks/useBookmarkBarData.js';
@@ -24,11 +24,19 @@ export default function BookmarkBar(props) {
   const {
     currentPath,
     currentBookmarks,
+    setCurrentBookmarks,
     navigateToFolder,
     navigateToBreadcrumb,
     updateUIAfterChange,
     addBookmarkToCurrentPath,
   } = useBookmarkBarNavigation(bookmarks, loadBookmarks);
+
+  // Watch for bookmarks to load and initialize the view
+  createEffect(() => {
+    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0) {
+      setCurrentBookmarks(bookmarks().bookmarks);
+    }
+  });
 
   // Search
   const {
