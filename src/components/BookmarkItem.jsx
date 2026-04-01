@@ -21,6 +21,41 @@ export default function BookmarkItem(props) {
     props.onFolderClick?.(props.item, props.index);
   };
   
+  const handleBookmarkClick = (e) => {
+    // Don't interfere with editing
+    if (props.isEditing) {
+      e.preventDefault();
+      return;
+    }
+    
+    // Don't interfere with cmd/ctrl+click or middle-click (let browser handle it)
+    if (e.metaKey || e.ctrlKey || e.button === 1) {
+      return;
+    }
+    
+    // For normal clicks, let the anchor tag try first, then fallback if blocked
+    const currentUrl = window.parent ? window.parent.location.href : window.location.href;
+    
+    setTimeout(() => {
+      try {
+        const newUrl = window.parent ? window.parent.location.href : window.location.href;
+        // If URL hasn't changed after 500ms, navigation was blocked
+        if (currentUrl === newUrl) {
+          console.warn('Navigation blocked, forcing redirect');
+          if (window.parent && window.parent !== window) {
+            window.parent.location.href = props.item.url;
+          } else {
+            window.location.href = props.item.url;
+          }
+        }
+      } catch (error) {
+        // Cross-origin error - we can't check parent URL, so force navigation
+        console.warn('Cross-origin restriction, forcing redirect');
+        window.open(props.item.url, '_blank');
+      }
+    }, 500);
+  };
+  
   const handleEditClick = (e) => {
     e.stopPropagation();
     setEditName(props.item.name);
@@ -182,9 +217,7 @@ export default function BookmarkItem(props) {
               class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 no-underline"
               classList={{ 'pointer-events-none': props.isEditing }}
               title={props.item.url}
-              onClick={(e) => {
-                if (props.isEditing) e.preventDefault();
-              }}
+              onClick={handleBookmarkClick}
             >
               <FaviconImage 
                 url={props.item.url}
