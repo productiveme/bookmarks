@@ -16,6 +16,12 @@ export default function BookmarkBar(props) {
   const [searchQuery, setSearchQuery] = createSignal('');
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
   
+  // Custom input modal state
+  const [showInputModal, setShowInputModal] = createSignal(false);
+  const [inputValue, setInputValue] = createSignal('');
+  const [inputPlaceholder, setInputPlaceholder] = createSignal('');
+  const [inputCallback, setInputCallback] = createSignal(null);
+  
   // Drag-to-scroll state
   let scrollContainer;
   const [isDragging, setIsDragging] = createSignal(false);
@@ -49,6 +55,29 @@ export default function BookmarkBar(props) {
     // Also check after a short delay in case localStorage wasn't ready
     setTimeout(checkConfig, 200);
   });
+  
+  // Custom input modal helpers
+  const showInput = (placeholder, callback) => {
+    setInputPlaceholder(placeholder);
+    setInputValue('');
+    setInputCallback(() => callback);
+    setShowInputModal(true);
+  };
+  
+  const handleInputSubmit = () => {
+    const callback = inputCallback();
+    const value = inputValue().trim();
+    setShowInputModal(false);
+    setInputValue('');
+    if (value && callback) {
+      callback(value);
+    }
+  };
+  
+  const handleInputCancel = () => {
+    setShowInputModal(false);
+    setInputValue('');
+  };
   
   const loadBookmarks = async () => {
     console.log('loadBookmarks called. Configured:', configured());
@@ -154,27 +183,24 @@ export default function BookmarkBar(props) {
   
   const handleAddFolder = () => {
     console.log('handleAddFolder called');
-    const folderName = prompt('Enter folder name:');
-    console.log('Prompt returned:', folderName);
-    if (!folderName) {
-      console.log('No folder name entered or prompt cancelled');
-      return;
-    }
-    
-    const newFolder = {
-      name: folderName,
-      type: 'folder',
-      children: []
-    };
-    
-    const updatedBookmarks = addBookmarkToCurrentPath(newFolder);
-    
-    // Optimistic update - update UI immediately
-    updateUIAfterChange(updatedBookmarks);
-    setShowAddMenu(false);
-    
-    // Save to Gist in background
-    saveBookmarks(updatedBookmarks, true);
+    showInput('Enter folder name', (folderName) => {
+      console.log('Folder name entered:', folderName);
+      
+      const newFolder = {
+        name: folderName,
+        type: 'folder',
+        children: []
+      };
+      
+      const updatedBookmarks = addBookmarkToCurrentPath(newFolder);
+      
+      // Optimistic update - update UI immediately
+      updateUIAfterChange(updatedBookmarks);
+      setShowAddMenu(false);
+      
+      // Save to Gist in background
+      saveBookmarks(updatedBookmarks, true);
+    });
   };
   
   const addBookmarkToCurrentPath = (newItem) => {
@@ -454,12 +480,13 @@ export default function BookmarkBar(props) {
         {/* Breadcrumbs - Fixed on left */}
         <div class="flex items-center gap-1 shrink-0">
           <button
-            class="px-2 py-1 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded"
+            class="p-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded"
             onClick={() => navigateToBreadcrumb(-1)}
             title="Home"
           >
-            <span class="hidden sm:inline">Home</span>
-            <span class="sm:hidden">H</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
           </button>
           <For each={currentPath()}>
             {(pathItem, i) => (
@@ -597,6 +624,43 @@ export default function BookmarkBar(props) {
             </button>
           </div>
         </Show>
+      </Show>
+      
+      {/* Custom Input Modal */}
+      <Show when={showInputModal()}>
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-sm w-full p-4 border border-[var(--color-border)]">
+            <input
+              type="text"
+              value={inputValue()}
+              onInput={(e) => setInputValue(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleInputSubmit();
+                } else if (e.key === 'Escape') {
+                  handleInputCancel();
+                }
+              }}
+              placeholder={inputPlaceholder()}
+              class="w-full px-3 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-sm"
+              autofocus
+            />
+            <div class="flex gap-2 mt-3">
+              <button
+                onClick={handleInputSubmit}
+                class="flex-1 px-3 py-1.5 text-sm bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+              >
+                OK
+              </button>
+              <button
+                onClick={handleInputCancel}
+                class="flex-1 px-3 py-1.5 text-sm bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       </Show>
     </div>
   );
