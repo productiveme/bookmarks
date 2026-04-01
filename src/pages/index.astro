@@ -86,11 +86,17 @@ const bookmarkletCode = generateBookmarklet(appUrl);
           
           <li class="flex gap-3">
             <span class="font-bold text-[var(--color-accent)]">4.</span>
-            <div>
+            <div class="flex-1">
               <strong>Use it anywhere</strong>
               <p class="text-sm text-[var(--color-text-secondary)] mt-1">
                 Click the bookmarklet on any webpage to show your bookmarks bar
               </p>
+              <a 
+                href="/bookmarks" 
+                class="mt-2 inline-block w-full px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors border border-[var(--color-border)] text-center no-underline"
+              >
+                Open Bookmarks
+              </a>
             </div>
           </li>
         </ol>
