@@ -566,44 +566,6 @@ export default function BookmarkBar(props) {
         
         <div class="w-px h-6 bg-[var(--color-border)]"></div>
         
-        {/* Search */}
-        <Show 
-          when={!showSearch()}
-          fallback={
-            <div class="flex items-center gap-1 shrink-0">
-              <input
-                id="bookmark-search-input"
-                type="text"
-                value={searchQuery()}
-                onInput={handleSearchInput}
-                placeholder="Search bookmarks..."
-                class="px-2 py-1 text-sm bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-48"
-              />
-              <button
-                class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-                onClick={handleSearchClear}
-                title="Clear search"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          }
-        >
-          <button
-            class="p-1.5 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors shrink-0"
-            onClick={handleSearchToggle}
-            title="Search bookmarks"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </Show>
-        
-        <div class="w-px h-6 bg-[var(--color-border)]"></div>
-        
         {/* Scrollable bookmarks */}
         <div 
           ref={scrollContainer}
@@ -646,6 +608,44 @@ export default function BookmarkBar(props) {
             </svg>
           </button>
         </div>
+        
+        <div class="w-px h-6 bg-[var(--color-border)]"></div>
+        
+        {/* Search */}
+        <Show 
+          when={!showSearch()}
+          fallback={
+            <div class="flex items-center gap-1 shrink-0">
+              <input
+                id="bookmark-search-input"
+                type="text"
+                value={searchQuery()}
+                onInput={handleSearchInput}
+                placeholder="Search bookmarks..."
+                class="px-2 py-1 text-sm bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-48"
+              />
+              <button
+                class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
+                onClick={handleSearchClear}
+                title="Clear search"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          }
+        >
+          <button
+            class="p-1.5 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors shrink-0"
+            onClick={handleSearchToggle}
+            title="Search bookmarks"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </Show>
       </Show>
     </div>
   );
