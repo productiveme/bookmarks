@@ -3,13 +3,12 @@ import { Show, createSignal } from 'solid-js';
 import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkItem(props) {
-  const [isEditing, setIsEditing] = createSignal(false);
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
   
   const handleClick = (e) => {
     // Don't trigger if editing
-    if (isEditing()) return;
+    if (props.isEditing) return;
     
     if (props.item.type === 'folder') {
       props.onFolderClick?.(props.item, props.index);
@@ -23,7 +22,7 @@ export default function BookmarkItem(props) {
     e.stopPropagation();
     setEditName(props.item.name);
     setEditUrl(props.item.url || '');
-    setIsEditing(true);
+    props.onEditStart?.();
   };
   
   const handleSave = (e) => {
@@ -39,18 +38,18 @@ export default function BookmarkItem(props) {
     }
     
     props.onEdit?.(props.index, updatedItem);
-    setIsEditing(false);
+    props.onEditEnd?.();
   };
   
   const handleCancel = (e) => {
     e.stopPropagation();
-    setIsEditing(false);
+    props.onEditEnd?.();
   };
   
   const handleDelete = (e) => {
     e.stopPropagation();
     props.onDelete?.(props.index);
-    setIsEditing(false);
+    props.onEditEnd?.();
   };
   
   const handleMoveLeft = (e) => {
@@ -65,7 +64,7 @@ export default function BookmarkItem(props) {
   
   return (
     <Show 
-      when={!isEditing()}
+      when={!props.isEditing}
       fallback={
         <div class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]">
           <button
@@ -107,32 +106,29 @@ export default function BookmarkItem(props) {
             />
           </Show>
           <button
-            class="px-2 py-0.5 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
+            class="p-1 text-green-600 hover:text-green-700 transition-colors"
             onClick={handleSave}
             title="Save"
           >
-            <span class="hidden sm:inline">Save</span>
-            <svg class="w-3 h-3 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </button>
           <button
-            class="px-2 py-0.5 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors whitespace-nowrap"
+            class="p-1 text-red-600 hover:text-red-700 transition-colors"
             onClick={handleCancel}
             title="Cancel"
           >
-            <span class="hidden sm:inline">Cancel</span>
-            <svg class="w-3 h-3 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
           <button
-            class="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors whitespace-nowrap"
+            class="p-1 text-[var(--color-text-secondary)] hover:text-red-600 transition-colors"
             onClick={handleDelete}
             title="Delete"
           >
-            <span class="hidden sm:inline">Delete</span>
-            <svg class="w-3 h-3 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
@@ -141,14 +137,14 @@ export default function BookmarkItem(props) {
     >
       <div class="flex items-center gap-0.5 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
         <button
-          class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5"
+          class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0"
           onClick={handleClick}
           title={props.item.type === 'link' ? props.item.url : `Open ${props.item.name}`}
         >
           <Show when={props.item.type === 'folder'} fallback={
             <FaviconImage 
               url={props.item.url}
-              class="w-3.5 h-3.5"
+              class="w-3.5 h-3.5 flex-shrink-0"
               fallbackIcon={
                 <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -156,20 +152,20 @@ export default function BookmarkItem(props) {
               }
             />
           }>
-            <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3.5 h-3.5 text-[var(--color-text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
           </Show>
-          <span>{props.item.name}</span>
+          <span class="truncate">{props.item.name}</span>
           <Show when={props.item.type === 'folder'}>
-            <svg class="w-3 h-3 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3 h-3 text-[var(--color-text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </Show>
         </button>
         
         <button
-          class="px-0.5 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors leading-none"
+          class="px-0.5 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors leading-none flex-shrink-0"
           onClick={handleEditClick}
           title="Edit"
         >

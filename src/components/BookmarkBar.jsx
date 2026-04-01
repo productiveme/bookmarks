@@ -19,6 +19,9 @@ export default function BookmarkBar(props) {
   const [showFolderInput, setShowFolderInput] = createSignal(false);
   const [folderInputValue, setFolderInputValue] = createSignal('');
   
+  // Edit state tracking
+  const [editingIndex, setEditingIndex] = createSignal(null);
+  
   // Drag-to-scroll state
   let scrollContainer;
   const [isDragging, setIsDragging] = createSignal(false);
@@ -328,6 +331,14 @@ export default function BookmarkBar(props) {
       current[currentIndex] = current[newIndex];
       current[newIndex] = temp;
       
+      // Update editing index if this item is being edited
+      if (editingIndex() === index) {
+        setEditingIndex(newIndex);
+      } else if (editingIndex() === newIndex) {
+        // If the item at newIndex was being edited, it moves to currentIndex
+        setEditingIndex(currentIndex);
+      }
+      
       // Optimistic update - update UI immediately
       updateUIAfterChange(data);
       
@@ -608,6 +619,9 @@ export default function BookmarkBar(props) {
                 index={index()}
                 isFirst={index() === 0}
                 isLast={index() === displayBookmarks().length - 1}
+                isEditing={editingIndex() === index()}
+                onEditStart={() => setEditingIndex(index())}
+                onEditEnd={() => setEditingIndex(null)}
                 onFolderClick={navigateToFolder}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
