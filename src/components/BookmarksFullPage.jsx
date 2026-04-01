@@ -1,7 +1,7 @@
 // BookmarksFullPage - Bookmarks Manager with sidebar and tile grid
 import { createSignal, Show, For, onMount } from 'solid-js';
 import { getGithubToken, getGistId } from '../utils/storage.js';
-import { parseYaml, stringifyYaml, deleteBookmarkAtPath } from '../utils/yaml.js';
+import { parseYaml, stringifyYaml, deleteBookmarkAtPath, getFolderList } from '../utils/yaml.js';
 import BookmarksHeader from './BookmarksHeader.jsx';
 import BookmarksSidebar from './BookmarksSidebar.jsx';
 import BookmarkTile from './BookmarkTile.jsx';
@@ -27,6 +27,7 @@ export default function BookmarksFullPage() {
   const [addUrl, setAddUrl] = createSignal('');
   const [prefilledName, setPrefilledName] = createSignal('');
   const [prefilledUrl, setPrefilledUrl] = createSignal('');
+  const [selectedFolder, setSelectedFolder] = createSignal([]);
 
   onMount(() => {
     const token = getGithubToken();
@@ -174,36 +175,98 @@ export default function BookmarksFullPage() {
   const handleSaveEdit = async (editedData) => {
     try {
       const { item, index, isFolder } = editingItem();
-      const allItems = [...folders(), ...currentBookmarks()];
-      const actualIndex = isFolder ? index : folders().length + index;
-      const path = [...currentPath().map(p => p.index), actualIndex];
       
-      const data = JSON.parse(JSON.stringify(bookmarks()));
-      
-      let current = data.bookmarks;
-      for (let i = 0; i < path.length - 1; i++) {
-        current = current[path[i]].children;
-      }
-      
-      current[path[path.length - 1]] = {
-        ...item,
-        name: editedData.name,
-        ...(item.type === 'link' ? { url: editedData.url } : {})
-      };
-      
-      setBookmarks(data);
-      
-      // Update current view
-      let viewCurrent = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        const folder = viewCurrent[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          viewCurrent = folder.children || [];
+      // For folders, just update in place
+      if (isFolder) {
+        const actualIndex = index;
+        const path = [...currentPath().map(p => p.index), actualIndex];
+        
+        const data = JSON.parse(JSON.stringify(bookmarks()));
+        
+        let current = data.bookmarks;
+        for (let i = 0; i < path.length - 1; i++) {
+          current = current[path[i]].children;
         }
+        
+        current[path[path.length - 1]] = {
+          ...item,
+          name: editedData.name
+        };
+        
+        setBookmarks(data);
+        
+        // Update current view
+        let viewCurrent = data.bookmarks;
+        for (const pathItem of currentPath()) {
+          const folder = viewCurrent[pathItem.index];
+          if (folder && folder.type === 'folder') {
+            viewCurrent = folder.children || [];
+          }
+        }
+        updateCurrentView(viewCurrent, currentPath());
+        
+        await saveBookmarks(data);
+      } else {
+        // For bookmarks, check if folder changed
+        const actualIndex = folders().length + index;
+        const currentItemPath = [...currentPath().map(p => p.index), actualIndex];
+        const newFolderPath = editedData.folderPath || [];
+        
+        const data = JSON.parse(JSON.stringify(bookmarks()));
+        
+        // Check if we're moving to a different folder
+        const currentFolderPath = currentPath().map(p => p.index);
+        const isMoving = JSON.stringify(currentFolderPath) !== JSON.stringify(newFolderPath);
+        
+        if (isMoving) {
+          // Delete from current location
+          let current = data.bookmarks;
+          for (let i = 0; i < currentItemPath.length - 1; i++) {
+            current = current[currentItemPath[i]].children;
+          }
+          current.splice(currentItemPath[currentItemPath.length - 1], 1);
+          
+          // Add to new location
+          let target = data.bookmarks;
+          for (const idx of newFolderPath) {
+            if (target[idx] && target[idx].type === 'folder') {
+              target = target[idx].children;
+            }
+          }
+          target.push({
+            type: 'link',
+            name: editedData.name,
+            url: editedData.url
+          });
+        } else {
+          // Update in place
+          let current = data.bookmarks;
+          for (let i = 0; i < currentItemPath.length - 1; i++) {
+            current = current[currentItemPath[i]].children;
+          }
+          
+          current[currentItemPath[currentItemPath.length - 1]] = {
+            ...item,
+            name: editedData.name,
+            url: editedData.url
+          };
+        }
+        
+        setBookmarks(data);
+        
+        // Update current view
+        let viewCurrent = data.bookmarks;
+        for (const pathItem of currentPath()) {
+          const folder = viewCurrent[pathItem.index];
+          if (folder && folder.type === 'folder') {
+            viewCurrent = folder.children || [];
+          }
+        }
+        updateCurrentView(viewCurrent, currentPath());
+        
+        await saveBookmarks(data);
       }
-      updateCurrentView(viewCurrent, currentPath());
       
-      await saveBookmarks(data);
       setShowEditModal(false);
       setEditingItem(null);
     } catch (err) {
@@ -354,6 +417,8 @@ export default function BookmarksFullPage() {
       setAddName('');
       setAddUrl('');
     }
+    // Set selected folder to current path
+    setSelectedFolder(currentPath().map(p => p.index));
     setShowAddModal(true);
   };
 
@@ -361,9 +426,14 @@ export default function BookmarksFullPage() {
     try {
       const data = JSON.parse(JSON.stringify(bookmarks()));
       
+      // Use the selected folder path from addData, or current path as fallback
+      const targetPath = addData.folderPath !== null ? addData.folderPath : currentPath().map(p => p.index);
+      
       let current = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
+      for (const index of targetPath) {
+        if (current[index] && current[index].type === 'folder') {
+          current = current[index].children;
+        }
       }
       
       if (!Array.isArray(current)) {
@@ -378,15 +448,18 @@ export default function BookmarksFullPage() {
       
       setBookmarks(data);
       
-      // Update current view
-      let viewCurrent = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        const folder = viewCurrent[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          viewCurrent = folder.children || [];
+      // Update current view only if we're still in the same folder
+      const currentIndices = currentPath().map(p => p.index);
+      if (JSON.stringify(currentIndices) === JSON.stringify(targetPath)) {
+        let viewCurrent = data.bookmarks;
+        for (const pathItem of currentPath()) {
+          const folder = viewCurrent[pathItem.index];
+          if (folder && folder.type === 'folder') {
+            viewCurrent = folder.children || [];
+          }
         }
+        updateCurrentView(viewCurrent, currentPath());
       }
-      updateCurrentView(viewCurrent, currentPath());
       
       await saveBookmarks(data);
       
@@ -518,6 +591,8 @@ export default function BookmarksFullPage() {
         show={showEditModal()}
         item={editingItem()?.item}
         isFolder={editingItem()?.isFolder}
+        currentFolderPath={currentPath().map(p => p.index)}
+        folderList={getFolderList(bookmarks())}
         onSave={handleSaveEdit}
         onCancel={handleCancelEdit}
       />
@@ -529,6 +604,9 @@ export default function BookmarksFullPage() {
         setName={setAddName}
         url={addUrl}
         setUrl={setAddUrl}
+        selectedFolder={selectedFolder}
+        setSelectedFolder={setSelectedFolder}
+        folderList={getFolderList(bookmarks())}
         onSave={handleSaveAdd}
         onCancel={handleCancelAdd}
       />

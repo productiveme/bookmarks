@@ -105,3 +105,32 @@ export function updateBookmarkAtPath(bookmarksData, path, updatedBookmark) {
   current[lastIndex] = updatedBookmark;
   return data;
 }
+
+// Flatten folder structure into list with paths
+// Returns array of { label: 'Root / Folder1 / Folder2', path: [0, 1], indices: [0, 1] }
+export function getFolderList(bookmarksData) {
+  const folders = [{ label: 'Root', path: [], indices: [] }];
+  
+  function traverse(items, pathParts = [], indexPath = []) {
+    items.forEach((item, index) => {
+      if (item.type === 'folder') {
+        const newPathParts = [...pathParts, item.name];
+        const newIndexPath = [...indexPath, index];
+        folders.push({
+          label: 'Root / ' + newPathParts.join(' / '),
+          path: newPathParts,
+          indices: newIndexPath
+        });
+        if (item.children && item.children.length > 0) {
+          traverse(item.children, newPathParts, newIndexPath);
+        }
+      }
+    });
+  }
+  
+  if (bookmarksData.bookmarks) {
+    traverse(bookmarksData.bookmarks);
+  }
+  
+  return folders;
+}

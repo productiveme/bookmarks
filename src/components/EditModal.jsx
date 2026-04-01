@@ -1,15 +1,17 @@
 // EditModal - Modal for editing folders and bookmarks
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, For } from 'solid-js';
 
 export default function EditModal(props) {
   const [name, setName] = createSignal(props.item?.name || '');
   const [url, setUrl] = createSignal(props.item?.url || '');
+  const [selectedFolder, setSelectedFolder] = createSignal(props.currentFolderPath || []);
 
   // Update signals when item changes
   const updateFromItem = () => {
     if (props.item) {
       setName(props.item.name);
       setUrl(props.item.url || '');
+      setSelectedFolder(props.currentFolderPath || []);
     }
   };
 
@@ -21,7 +23,8 @@ export default function EditModal(props) {
   const handleSave = () => {
     props.onSave({
       name: name(),
-      url: url()
+      url: url(),
+      folderPath: selectedFolder()
     });
   };
 
@@ -75,6 +78,27 @@ export default function EditModal(props) {
                   class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 />
               </div>
+
+              <Show when={props.folderList && props.folderList.length > 0}>
+                <div>
+                  <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                    Folder
+                  </label>
+                  <select
+                    value={JSON.stringify(selectedFolder())}
+                    onChange={(e) => setSelectedFolder(JSON.parse(e.target.value))}
+                    class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  >
+                    <For each={props.folderList}>
+                      {(folder) => (
+                        <option value={JSON.stringify(folder.indices)}>
+                          {folder.label}
+                        </option>
+                      )}
+                    </For>
+                  </select>
+                </div>
+              </Show>
             </Show>
           </div>
           

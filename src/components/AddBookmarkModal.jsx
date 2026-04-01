@@ -1,5 +1,5 @@
 // AddBookmarkModal - Modal for adding new bookmarks
-import { Show } from 'solid-js';
+import { Show, For } from 'solid-js';
 
 export default function AddBookmarkModal(props) {
   const handleSave = () => {
@@ -9,7 +9,8 @@ export default function AddBookmarkModal(props) {
     }
     props.onSave({
       name: props.name().trim(),
-      url: props.url().trim()
+      url: props.url().trim(),
+      folderPath: props.selectedFolder ? props.selectedFolder() : null
     });
   };
 
@@ -62,6 +63,27 @@ export default function AddBookmarkModal(props) {
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
             </div>
+
+            <Show when={props.folderList && props.folderList.length > 0}>
+              <div>
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  Folder
+                </label>
+                <select
+                  value={props.selectedFolder ? JSON.stringify(props.selectedFolder()) : '[]'}
+                  onChange={(e) => props.setSelectedFolder(JSON.parse(e.target.value))}
+                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                >
+                  <For each={props.folderList}>
+                    {(folder) => (
+                      <option value={JSON.stringify(folder.indices)}>
+                        {folder.label}
+                      </option>
+                    )}
+                  </For>
+                </select>
+              </div>
+            </Show>
           </div>
           
           <div class="flex gap-3 mt-6">

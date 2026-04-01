@@ -153,8 +153,13 @@ export default function BookmarkBar(props) {
   };
   
   const handleAddFolder = () => {
+    console.log('handleAddFolder called');
     const folderName = prompt('Enter folder name:');
-    if (!folderName) return;
+    console.log('Prompt returned:', folderName);
+    if (!folderName) {
+      console.log('No folder name entered or prompt cancelled');
+      return;
+    }
     
     const newFolder = {
       name: folderName,
@@ -556,7 +561,10 @@ export default function BookmarkBar(props) {
               </button>
               <button
                 class="px-2 py-1 text-xs bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors whitespace-nowrap"
-                onClick={handleAddFolder}
+                onClick={() => {
+                  console.log('Folder button clicked!');
+                  handleAddFolder();
+                }}
                 title="Add new folder"
               >
                 <span class="hidden sm:inline">Folder</span>
