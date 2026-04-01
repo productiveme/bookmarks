@@ -237,8 +237,10 @@ export default function BookmarksFullPage() {
           {/* Sidebar - Folders (hidden on mobile) */}
           <BookmarksSidebar
             folders={folders()}
+            currentPath={currentPath()}
             onAddFolder={handleAddFolder}
             onNavigateToFolder={navigateToFolder}
+            onNavigateUp={handleNavigateUp}
             onEdit={handleEdit}
             onDelete={(index) => handleDelete(index, true)}
           />
@@ -246,9 +248,22 @@ export default function BookmarksFullPage() {
           {/* Main Area - Bookmarks Grid */}
           <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-              <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">
-                {searchQuery().trim() ? 'Search Results' : 'Bookmarks'}
-              </h2>
+              <div class="flex items-center gap-3">
+                <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {searchQuery().trim() ? 'Search Results' : 'Bookmarks'}
+                </h2>
+                <Show when={searchQuery().trim()}>
+                  <button
+                    onClick={handleClearSearch}
+                    class="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors"
+                    title="Clear search"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </Show>
+              </div>
               <Show when={!searchQuery().trim()}>
                 <button
                   onClick={handleAddBookmark}

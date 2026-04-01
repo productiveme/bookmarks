@@ -6,7 +6,18 @@ export default function BookmarksHeader(props) {
     <div class="bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] p-4">
       <div class="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>
+          <Show 
+            when={props.configured}
+            fallback={<h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>}
+          >
+            <button
+              onClick={props.onRefresh}
+              class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+              title="Reload bookmarks from Gist"
+            >
+              📚 Bookmarks
+            </button>
+          </Show>
           <Show when={!props.loading && !props.configured}>
             <a href="/setup" target="_blank" class="text-sm text-[var(--color-accent)] hover:underline">
               Setup Required
@@ -36,15 +47,6 @@ export default function BookmarksHeader(props) {
                 </button>
               </Show>
             </div>
-            <button
-              onClick={props.onRefresh}
-              class="px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
-              title="Refresh from Gist"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
           </div>
         </Show>
       </div>
@@ -53,10 +55,11 @@ export default function BookmarksHeader(props) {
       <Show when={!props.loading && props.configured}>
         <div class="max-w-[1920px] mx-auto mt-3 flex items-center gap-2 text-sm flex-wrap">
           <button
-            class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors whitespace-nowrap"
-            onClick={() => props.onNavigateToBreadcrumb(-1)}
+            class="px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] rounded transition-colors whitespace-nowrap flex items-center gap-1"
+            onClick={props.onRefresh}
+            title="Reload bookmarks from Gist"
           >
-            Home
+            📚 Home
           </button>
           <For each={props.currentPath}>
             {(pathItem, i) => (

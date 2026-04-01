@@ -17,11 +17,26 @@ export default function BookmarksSidebar(props) {
         </button>
       </div>
       
-      <Show when={props.folders.length === 0}>
-        <p class="text-sm text-[var(--color-text-secondary)] italic">No folders</p>
-      </Show>
-      
       <div class="space-y-1">
+        {/* Parent folder (..) - only show when not at root */}
+        <Show when={props.currentPath && props.currentPath.length > 0}>
+          <div class="flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
+            <button
+              class="flex-1 flex items-center gap-2 text-left"
+              onClick={props.onNavigateUp}
+            >
+              <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+              <span class="text-[var(--color-text-primary)] font-semibold">..</span>
+            </button>
+          </div>
+        </Show>
+        
+        <Show when={props.folders.length === 0 && props.currentPath.length === 0}>
+          <p class="text-sm text-[var(--color-text-secondary)] italic">No folders</p>
+        </Show>
+        
         <For each={props.folders}>
           {(folder, index) => (
             <div class="group flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
