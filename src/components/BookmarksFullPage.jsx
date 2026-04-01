@@ -1,503 +1,147 @@
-// BookmarksFullPage - Bookmarks Manager with sidebar and tile grid
+// BookmarksFullPage - Bookmarks Manager with sidebar and tile grid (REFACTORED)
 import { createSignal, Show, For, onMount } from 'solid-js';
-import { getGithubToken, getGistId } from '../utils/storage.js';
-import { parseYaml, stringifyYaml, deleteBookmarkAtPath, getFolderList } from '../utils/yaml.js';
+import { getFolderList } from '../utils/yaml.js';
+import { useBookmarksData } from '../hooks/useBookmarksData.js';
+import { useBookmarksNavigation } from '../hooks/useBookmarksNavigation.js';
+import { useBookmarksSearch } from '../hooks/useBookmarksSearch.js';
+import { useBookmarksCRUD } from '../hooks/useBookmarksCRUD.js';
+import { useBookmarksDragDrop } from '../hooks/useBookmarksDragDrop.js';
 import BookmarksHeader from './BookmarksHeader.jsx';
 import BookmarksSidebar from './BookmarksSidebar.jsx';
 import BookmarkTile from './BookmarkTile.jsx';
 import FolderTile from './FolderTile.jsx';
-import DropZone from './DropZone.jsx';
 import EditModal from './EditModal.jsx';
 import AddBookmarkModal from './AddBookmarkModal.jsx';
 
 export default function BookmarksFullPage() {
-  const [bookmarks, setBookmarks] = createSignal({ bookmarks: [] });
-  const [currentPath, setCurrentPath] = createSignal([]);
-  const [currentBookmarks, setCurrentBookmarks] = createSignal([]);
-  const [folders, setFolders] = createSignal([]);
-  const [loading, setLoading] = createSignal(true);
-  const [error, setError] = createSignal(null);
-  const [configured, setConfigured] = createSignal(false);
-  const [searchQuery, setSearchQuery] = createSignal('');
-  const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
-  const [filteredFolders, setFilteredFolders] = createSignal([]);
-  const [showEditModal, setShowEditModal] = createSignal(false);
-  const [showAddModal, setShowAddModal] = createSignal(false);
-  const [editingItem, setEditingItem] = createSignal(null);
+  // Bookmarks data management
+  const {
+    bookmarks,
+    setBookmarks,
+    loading,
+    error,
+    configured,
+    loadBookmarks,
+    saveBookmarks,
+  } = useBookmarksData();
+
+  // Navigation
+  const {
+    currentPath,
+    currentBookmarks,
+    folders,
+    updateCurrentView,
+    navigateToFolder,
+    navigateToBreadcrumb,
+    handleFolderTileClick,
+    handleNavigateUp,
+  } = useBookmarksNavigation(bookmarks, loadBookmarks);
+
+  // Search
+  const {
+    searchQuery,
+    handleSearchInput,
+    handleClearSearch,
+    displayBookmarks,
+    displayFolders,
+    displayAllItems,
+  } = useBookmarksSearch(currentBookmarks);
+
+  // CRUD operations
+  const {
+    showEditModal,
+    showAddModal,
+    setShowAddModal,
+    editingItem,
+    handleDelete,
+    handleEdit,
+    handleSaveEdit,
+    handleCancelEdit,
+    handleAddFolder,
+  } = useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, updateCurrentView, saveBookmarks);
+
+  // Drag and drop
+  const {
+    draggedItem,
+    dropTargetItem,
+    dropOnFolder,
+    dropZoneIndex,
+    handleDragStart,
+    handleDragEnd,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragOverParent,
+    handleDropOnParent,
+    handleDropZoneDragOver,
+    handleDropZoneDragLeave,
+    handleDropZoneDrop,
+  } = useBookmarksDragDrop(bookmarks, setBookmarks, currentPath, updateCurrentView, saveBookmarks);
+
+  // Add bookmark modal state
   const [addName, setAddName] = createSignal('');
   const [addUrl, setAddUrl] = createSignal('');
   const [prefilledName, setPrefilledName] = createSignal('');
   const [prefilledUrl, setPrefilledUrl] = createSignal('');
   const [selectedFolder, setSelectedFolder] = createSignal([]);
-  
-  // Drag and drop state
-  const [draggedItem, setDraggedItem] = createSignal(null);
-  const [dropTargetItem, setDropTargetItem] = createSignal(null);
-  const [dropOnFolder, setDropOnFolder] = createSignal(false);
-  const [dropZoneIndex, setDropZoneIndex] = createSignal(null); // Track which drop zone is active
 
+  // Initialize bookmarks view after load
   onMount(() => {
-    const token = getGithubToken();
-    const gistId = getGistId();
-    const isConfigured = !!(token && gistId);
-    
-    setConfigured(isConfigured);
-    
-    if (isConfigured) {
-      loadBookmarks();
-    } else {
-      setLoading(false);
-    }
-
     // Check if we came from a CSP-blocked page with page info
     const params = new URLSearchParams(window.location.search);
     const fromPage = params.get('fromPage');
     const pageTitle = params.get('title');
     const pageUrl = params.get('url');
 
-    if (fromPage === '1' && pageTitle && pageUrl && isConfigured) {
-      // Store pre-filled data but don't show modal yet (user might want to navigate to a folder first)
+    if (fromPage === '1' && pageTitle && pageUrl && configured()) {
+      // Store pre-filled data
       setPrefilledName(decodeURIComponent(pageTitle));
       setPrefilledUrl(decodeURIComponent(pageUrl));
 
-      // Clean up URL parameters (remove them from address bar)
+      // Clean up URL parameters
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, '', cleanUrl);
     }
+
+    // Initialize view when bookmarks load
+    if (configured() && bookmarks()?.bookmarks) {
+      updateCurrentView(bookmarks().bookmarks, []);
+    }
   });
 
-  const loadBookmarks = async () => {
-    try {
-      const token = getGithubToken();
-      const gistId = getGistId();
-      
-      const response = await fetch(`/api/bookmarks?token=${encodeURIComponent(token)}&gistId=${encodeURIComponent(gistId)}`);
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      const parsed = parseYaml(data.content);
-      setBookmarks(parsed);
-      updateCurrentView(parsed.bookmarks || [], []);
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  const updateCurrentView = (items, path) => {
-    // Keep all items together in original order
-    setCurrentBookmarks(items);
-    setCurrentPath(path);
-    
-    // Still extract folders for sidebar
-    const folderItems = items.filter(item => item.type === 'folder');
-    setFolders(folderItems);
-  };
-
-  const navigateToFolder = (folder, index) => {
-    const newPath = [...currentPath(), { name: folder.name, index }];
-    updateCurrentView(folder.children || [], newPath);
-  };
-
-  const navigateToBreadcrumb = async (targetIndex) => {
-    if (targetIndex === -1) {
-      // Navigate to root - reload from Gist
-      await loadBookmarks();
-    } else {
-      // Navigate to specific breadcrumb
-      const newPath = currentPath().slice(0, targetIndex + 1);
-      
-      let current = bookmarks().bookmarks;
-      for (const pathItem of newPath) {
-        const folder = current[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          current = folder.children || [];
-        }
-      }
-      updateCurrentView(current, newPath);
-    }
-  };
-
-  const saveBookmarks = async (updatedBookmarks) => {
-    try {
-      const token = getGithubToken();
-      const gistId = getGistId();
-      const yamlContent = stringifyYaml(updatedBookmarks);
-      
-      const response = await fetch('/api/bookmarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, gistId, content: yamlContent })
-      });
-      
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-    } catch (err) {
-      throw new Error('Failed to save: ' + err.message);
-    }
-  };
-
-  const handleDelete = async (index, isFolder) => {
-    if (!confirm('Are you sure you want to delete this ' + (isFolder ? 'folder' : 'bookmark') + '?')) {
-      return;
-    }
-
-    try {
-      console.log('[DELETE] Starting delete - index:', index, 'isFolder:', isFolder);
-      console.log('[DELETE] Current path:', currentPath().map(p => `${p.name}[${p.index}]`).join(' / '));
-      
-      // index is already correct from displayAllItems()
-      const actualIndex = index;
-      const path = [...currentPath().map(p => p.index), actualIndex];
-      
-      console.log('[DELETE] Computed delete path:', path);
-      
-      const updatedBookmarks = deleteBookmarkAtPath(bookmarks(), path);
-      
-      setBookmarks(updatedBookmarks);
-      
-      // Update current view
-      let current = updatedBookmarks.bookmarks;
-      for (const pathItem of currentPath()) {
-        const folder = current[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          current = folder.children || [];
-        }
-      }
-      
-      console.log('[DELETE] Updated current view, items count:', current.length);
-      
-      updateCurrentView(current, currentPath());
-      
-      await saveBookmarks(updatedBookmarks);
-      
-      console.log('[DELETE] Successfully completed');
-    } catch (err) {
-      console.error('[DELETE] Error:', err);
-      alert('Error deleting: ' + err.message);
-    }
-  };
-
-  const handleEdit = (item, index, isFolder) => {
-    setEditingItem({ item, index, isFolder });
-    setShowEditModal(true);
-  };
-
-  const handleSaveEdit = async (editedData) => {
-    try {
-      const { item, index, isFolder } = editingItem();
-      
-      // For folders, check if parent folder changed
-      if (isFolder) {
-        const actualIndex = index;
-        const currentItemPath = [...currentPath().map(p => p.index), actualIndex];
-        const newFolderPath = editedData.folderPath || [];
-        
-        const data = JSON.parse(JSON.stringify(bookmarks()));
-        
-        // Check if we're moving to a different parent folder
-        const currentFolderPath = currentPath().map(p => p.index);
-        const isMoving = JSON.stringify(currentFolderPath) !== JSON.stringify(newFolderPath);
-        
-        if (isMoving) {
-          // Delete from current location
-          let current = data.bookmarks;
-          for (let i = 0; i < currentItemPath.length - 1; i++) {
-            current = current[currentItemPath[i]].children;
-          }
-          const folderToMove = current[currentItemPath[currentItemPath.length - 1]];
-          current.splice(currentItemPath[currentItemPath.length - 1], 1);
-          
-          // Update name
-          folderToMove.name = editedData.name;
-          
-          // Add to new location
-          let target = data.bookmarks;
-          for (const idx of newFolderPath) {
-            if (target[idx] && target[idx].type === 'folder') {
-              target = target[idx].children;
-            }
-          }
-          target.push(folderToMove);
-        } else {
-          // Update in place
-          let current = data.bookmarks;
-          for (let i = 0; i < currentItemPath.length - 1; i++) {
-            current = current[currentItemPath[i]].children;
-          }
-          
-          current[currentItemPath[currentItemPath.length - 1]] = {
-            ...item,
-            name: editedData.name
-          };
-        }
-        
-        setBookmarks(data);
-        
-        // Update current view
-        let viewCurrent = data.bookmarks;
-        for (const pathItem of currentPath()) {
-          const folder = viewCurrent[pathItem.index];
-          if (folder && folder.type === 'folder') {
-            viewCurrent = folder.children || [];
-          }
-        }
-        updateCurrentView(viewCurrent, currentPath());
-        
-        await saveBookmarks(data);
-      } else {
-        // For bookmarks, check if folder changed
-        const actualIndex = index;  // index is already correct from displayAllItems()
-        const currentItemPath = [...currentPath().map(p => p.index), actualIndex];
-        const newFolderPath = editedData.folderPath || [];
-        
-        const data = JSON.parse(JSON.stringify(bookmarks()));
-        
-        // Check if we're moving to a different folder
-        const currentFolderPath = currentPath().map(p => p.index);
-        const isMoving = JSON.stringify(currentFolderPath) !== JSON.stringify(newFolderPath);
-        
-        if (isMoving) {
-          // Delete from current location
-          let current = data.bookmarks;
-          for (let i = 0; i < currentItemPath.length - 1; i++) {
-            current = current[currentItemPath[i]].children;
-          }
-          current.splice(currentItemPath[currentItemPath.length - 1], 1);
-          
-          // Add to new location
-          let target = data.bookmarks;
-          for (const idx of newFolderPath) {
-            if (target[idx] && target[idx].type === 'folder') {
-              target = target[idx].children;
-            }
-          }
-          target.push({
-            type: 'link',
-            name: editedData.name,
-            url: editedData.url
-          });
-        } else {
-          // Update in place
-          let current = data.bookmarks;
-          for (let i = 0; i < currentItemPath.length - 1; i++) {
-            current = current[currentItemPath[i]].children;
-          }
-          
-          current[currentItemPath[currentItemPath.length - 1]] = {
-            ...item,
-            name: editedData.name,
-            url: editedData.url
-          };
-        }
-        
-        setBookmarks(data);
-        
-        // Update current view
-        let viewCurrent = data.bookmarks;
-        for (const pathItem of currentPath()) {
-          const folder = viewCurrent[pathItem.index];
-          if (folder && folder.type === 'folder') {
-            viewCurrent = folder.children || [];
-          }
-        }
-        updateCurrentView(viewCurrent, currentPath());
-        
-        await saveBookmarks(data);
-      }
-      
-      setShowEditModal(false);
-      setEditingItem(null);
-    } catch (err) {
-      alert('Error saving: ' + err.message);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setShowEditModal(false);
-    setEditingItem(null);
-  };
-
-  const searchAllBookmarks = (items, query, results = []) => {
-    for (const item of items) {
-      if (item.name.toLowerCase().includes(query.toLowerCase())) {
-        results.push(item);
-      }
-      if (item.type === 'folder' && item.children) {
-        searchAllBookmarks(item.children, query, results);
-      }
-    }
-    return results;
-  };
-
-  const handleSearchInput = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    
-    if (query.trim()) {
-      const results = searchAllBookmarks(bookmarks().bookmarks || [], query);
-      setFilteredFolders(results.filter(item => item.type === 'folder'));
-      setFilteredBookmarks(results.filter(item => item.type === 'link'));
-    } else {
-      setFilteredFolders([]);
-      setFilteredBookmarks([]);
-    }
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    setFilteredFolders([]);
-    setFilteredBookmarks([]);
-  };
-
-  const handleSearchFolderClick = (folder) => {
-    // Find the path to this folder in the bookmarks tree
-    const findFolderPath = (items, target, currentPath = []) => {
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item === target) {
-          return [...currentPath, { name: item.name, index: i }];
-        }
-        if (item.type === 'folder' && item.children) {
-          const found = findFolderPath(item.children, target, [...currentPath, { name: item.name, index: i }]);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    const path = findFolderPath(bookmarks().bookmarks || [], folder);
-    if (path) {
-      // Clear search
-      handleClearSearch();
-      
-      // Navigate to the folder
-      setCurrentPath(path);
-      updateCurrentView(folder.children || [], path);
-    }
-  };
-
-  const handleFolderTileClick = (folder, index) => {
-    if (searchQuery().trim()) {
-      // When searching, find the folder path and navigate to it
-      handleSearchFolderClick(folder);
-    } else {
-      // When browsing normally, navigate to the folder directly
-      navigateToFolder(folder, index);
-    }
-  };
-
-  const displayBookmarks = () => {
-    if (searchQuery().trim()) {
-      return filteredBookmarks();
-    }
-    return currentBookmarks();
-  };
-
-  const displayAllItems = () => {
-    // When searching, show folders and bookmarks separately
-    if (searchQuery().trim()) {
-      return [...filteredFolders(), ...filteredBookmarks()];
-    }
-    // When browsing, show all items in original order
-    return currentBookmarks();
-  };
-
-  const handleAddFolder = async () => {
-    const name = prompt('Enter folder name:');
-    if (!name || !name.trim()) return;
-
-    try {
-      const data = JSON.parse(JSON.stringify(bookmarks()));
-      
-      let current = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
-      }
-      
-      if (!Array.isArray(current)) {
-        current = [];
-      }
-      
-      current.push({
-        type: 'folder',
-        name: name.trim(),
-        children: []
-      });
-      
-      setBookmarks(data);
-      
-      // Update current view
-      let viewCurrent = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        const folder = viewCurrent[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          viewCurrent = folder.children || [];
-        }
-      }
-      updateCurrentView(viewCurrent, currentPath());
-      
-      await saveBookmarks(data);
-    } catch (err) {
-      alert('Error adding folder: ' + err.message);
-    }
-  };
-
   const handleAddBookmark = () => {
-    // Check if we have pre-filled values from CSP fallback
-    if (prefilledName() || prefilledUrl()) {
-      // Use pre-filled values on first click
+    // Pre-fill from stored values if available
+    if (prefilledName() && prefilledUrl()) {
       setAddName(prefilledName());
       setAddUrl(prefilledUrl());
-      // Clear pre-filled values so next time starts fresh
-      setPrefilledName('');
-      setPrefilledUrl('');
-    } else {
-      // Clear any previous values and show modal
-      setAddName('');
-      setAddUrl('');
     }
-    // Set selected folder to current path
     setSelectedFolder(currentPath().map(p => p.index));
     setShowAddModal(true);
   };
 
-  const handleSaveAdd = async (addData) => {
+  const handleSaveAdd = async (bookmarkData) => {
     try {
       const data = JSON.parse(JSON.stringify(bookmarks()));
       
-      // Use the selected folder path from addData, or current path as fallback
-      const targetPath = addData.folderPath !== null ? addData.folderPath : currentPath().map(p => p.index);
-      
-      let current = data.bookmarks;
-      for (const index of targetPath) {
-        if (current[index] && current[index].type === 'folder') {
-          current = current[index].children;
+      // Navigate to target folder
+      let target = data.bookmarks;
+      for (const idx of bookmarkData.folderPath) {
+        if (target[idx] && target[idx].type === 'folder') {
+          target = target[idx].children;
         }
       }
       
-      if (!Array.isArray(current)) {
-        current = [];
-      }
-      
-      current.push({
+      target.push({
         type: 'link',
-        name: addData.name,
-        url: addData.url
+        name: bookmarkData.name,
+        url: bookmarkData.url
       });
       
       setBookmarks(data);
       
-      // Update current view only if we're still in the same folder
-      const currentIndices = currentPath().map(p => p.index);
-      if (JSON.stringify(currentIndices) === JSON.stringify(targetPath)) {
+      // Update current view if adding to current folder
+      const currentFolderPath = currentPath().map(p => p.index);
+      if (JSON.stringify(currentFolderPath) === JSON.stringify(bookmarkData.folderPath)) {
         let viewCurrent = data.bookmarks;
         for (const pathItem of currentPath()) {
           const folder = viewCurrent[pathItem.index];
@@ -514,7 +158,6 @@ export default function BookmarksFullPage() {
       setShowAddModal(false);
       setAddName('');
       setAddUrl('');
-      // Also clear any remaining pre-filled values
       setPrefilledName('');
       setPrefilledUrl('');
     } catch (err) {
@@ -526,265 +169,8 @@ export default function BookmarksFullPage() {
     setShowAddModal(false);
     setAddName('');
     setAddUrl('');
-    // Also clear any remaining pre-filled values
     setPrefilledName('');
     setPrefilledUrl('');
-  };
-
-  // Drag and drop handlers
-  const handleDragStart = (item) => {
-    setDraggedItem(item);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
-    setDropTargetItem(null);
-    setDropOnFolder(false);
-    setDropZoneIndex(null);
-  };
-
-  const handleDragOver = (e, targetItem, isFolder) => {
-    e.preventDefault();
-    setDropTargetItem(targetItem);
-    setDropOnFolder(isFolder);
-  };
-
-  const handleDragLeave = () => {
-    setDropTargetItem(null);
-    setDropOnFolder(false);
-  };
-
-  const handleDrop = async (e, targetItem, targetIsFolder) => {
-    e.preventDefault();
-    
-    const sourceItem = draggedItem();
-    
-    if (!sourceItem || !targetItem || sourceItem === targetItem) {
-      handleDragEnd();
-      return;
-    }
-    
-    try {
-      const data = JSON.parse(JSON.stringify(bookmarks()));
-      let current = data.bookmarks;
-      
-      // Navigate to current folder
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
-      }
-      
-      // Find source index
-      const sourceIndex = current.findIndex(item => 
-        item.name === sourceItem.name && 
-        (item.url === sourceItem.url || item.type === 'folder')
-      );
-      
-      if (sourceIndex === -1) {
-        console.error('Source item not found');
-        handleDragEnd();
-        return;
-      }
-      
-      const itemToMove = current[sourceIndex];
-      
-      // Case 1: Dropping onto a folder - move item into folder
-      if (targetIsFolder) {
-        const targetIndex = current.findIndex(item => 
-          item.name === targetItem.name && item.type === 'folder'
-        );
-        
-        if (targetIndex === -1) {
-          console.error('Target folder not found');
-          handleDragEnd();
-          return;
-        }
-        
-        const targetFolder = current[targetIndex];
-        
-        // Remove from current location
-        current.splice(sourceIndex, 1);
-        
-        // Add to target folder
-        if (!targetFolder.children) {
-          targetFolder.children = [];
-        }
-        targetFolder.children.push(itemToMove);
-      }
-      // Case 2: Dropping next to another item - reorder
-      else {
-        const targetIndex = current.findIndex(item => 
-          item.name === targetItem.name && 
-          (item.url === targetItem.url || item.type === 'folder')
-        );
-        
-        if (targetIndex === -1) {
-          console.error('Target item not found');
-          handleDragEnd();
-          return;
-        }
-        
-        // Remove from source position
-        current.splice(sourceIndex, 1);
-        
-        // Adjust target index if we're moving down in the same list
-        const adjustedIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-        
-        // Insert at target position
-        current.splice(adjustedIndex, 0, itemToMove);
-      }
-      
-      setBookmarks(data);
-      
-      // Update current view
-      let viewCurrent = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        const folder = viewCurrent[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          viewCurrent = folder.children || [];
-        }
-      }
-      updateCurrentView(viewCurrent, currentPath());
-      
-      await saveBookmarks(data);
-    } catch (err) {
-      alert('Error moving item: ' + err.message);
-    }
-    
-    handleDragEnd();
-  };
-
-  const handleNavigateUp = async () => {
-    // Navigate back to parent folder
-    // Same as clicking the last breadcrumb minus one
-    await navigateToBreadcrumb(currentPath().length - 2);
-  };
-
-  const handleDragOverParent = (e) => {
-    e.preventDefault();
-    setDropTargetItem({ name: '..' });
-    setDropOnFolder(true);
-  };
-
-  const handleDropOnParent = async (e) => {
-    e.preventDefault();
-    
-    const sourceItem = draggedItem();
-    if (!sourceItem) {
-      handleDragEnd();
-      return;
-    }
-    
-    try {
-      const data = JSON.parse(JSON.stringify(bookmarks()));
-      
-      // Navigate to current folder
-      let current = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
-      }
-      
-      // Find and remove source item from current folder
-      const sourceIndex = current.findIndex(item => 
-        item.name === sourceItem.name && 
-        (item.url === sourceItem.url || item.type === 'folder')
-      );
-      
-      if (sourceIndex === -1) {
-        handleDragEnd();
-        return;
-      }
-      
-      const itemToMove = current[sourceIndex];
-      current.splice(sourceIndex, 1);
-      
-      // Navigate to parent folder and add item there
-      let parent = data.bookmarks;
-      for (let i = 0; i < currentPath().length - 1; i++) {
-        parent = parent[currentPath()[i].index].children;
-      }
-      
-      parent.push(itemToMove);
-      
-      setBookmarks(data);
-      updateCurrentView(current, currentPath());
-      await saveBookmarks(data);
-    } catch (err) {
-      alert('Error moving item: ' + err.message);
-    }
-    
-    handleDragEnd();
-  };
-
-  const handleDropZoneDragOver = (e, index) => {
-    e.preventDefault();
-    setDropZoneIndex(index);
-    setDropTargetItem(null);
-    setDropOnFolder(false);
-  };
-
-  const handleDropZoneDragLeave = () => {
-    setDropZoneIndex(null);
-  };
-
-  const handleDropZoneDrop = async (e, targetIndex) => {
-    e.preventDefault();
-    
-    const sourceItem = draggedItem();
-    if (!sourceItem) {
-      handleDragEnd();
-      return;
-    }
-    
-    try {
-      const data = JSON.parse(JSON.stringify(bookmarks()));
-      let current = data.bookmarks;
-      
-      // Navigate to current folder
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
-      }
-      
-      // Find source index
-      const sourceIndex = current.findIndex(item => 
-        item.name === sourceItem.name && 
-        (item.url === sourceItem.url || item.type === 'folder')
-      );
-      
-      if (sourceIndex === -1) {
-        console.error('Source item not found');
-        handleDragEnd();
-        return;
-      }
-      
-      const itemToMove = current[sourceIndex];
-      
-      // Remove from source position
-      current.splice(sourceIndex, 1);
-      
-      // Adjust target index if we're moving down in the same list
-      const adjustedIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-      
-      // Insert at target position
-      current.splice(adjustedIndex, 0, itemToMove);
-      
-      setBookmarks(data);
-      
-      // Update current view
-      let viewCurrent = data.bookmarks;
-      for (const pathItem of currentPath()) {
-        const folder = viewCurrent[pathItem.index];
-        if (folder && folder.type === 'folder') {
-          viewCurrent = folder.children || [];
-        }
-      }
-      updateCurrentView(viewCurrent, currentPath());
-      
-      await saveBookmarks(data);
-    } catch (err) {
-      alert('Error moving item: ' + err.message);
-    }
-    
-    handleDragEnd();
   };
 
   return (
@@ -804,22 +190,39 @@ export default function BookmarksFullPage() {
       {/* Main Content */}
       <div class="flex-1 flex max-w-[1920px] mx-auto w-full">
         <Show when={loading()}>
-          <div class="flex-1 flex items-center justify-center p-8">
-            <div class="text-[var(--color-text-secondary)] text-lg">Loading bookmarks...</div>
+          <div class="flex-1 flex items-center justify-center">
+            <p class="text-[var(--color-text-secondary)]">Loading bookmarks...</p>
           </div>
         </Show>
 
         <Show when={error()}>
-          <div class="flex-1 flex items-center justify-center p-8">
-            <div class="text-red-500 text-lg">{error()}</div>
+          <div class="flex-1 flex items-center justify-center p-6">
+            <div class="text-center">
+              <p class="text-red-500 mb-4">Error loading bookmarks: {error()}</p>
+              <button
+                onClick={loadBookmarks}
+                class="px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         </Show>
 
         <Show when={!loading() && !error() && !configured()}>
-          <div class="flex-1 flex items-center justify-center p-8">
-            <div class="text-center">
-              <p class="text-[var(--color-text-secondary)] mb-4">Please configure your GitHub token and Gist ID</p>
-              <a href="/setup" target="_blank" class="px-6 py-3 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors inline-block">
+          <div class="flex-1 flex items-center justify-center p-6">
+            <div class="text-center max-w-md">
+              <h2 class="text-2xl font-bold text-[var(--color-text-primary)] mb-4">
+                Welcome to Bookmarks Manager
+              </h2>
+              <p class="text-[var(--color-text-secondary)] mb-6">
+                To get started, you need to configure your GitHub token and Gist ID.
+              </p>
+              <a
+                href="/setup"
+                target="_blank"
+                class="inline-block px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
+              >
                 Go to Setup
               </a>
             </div>
