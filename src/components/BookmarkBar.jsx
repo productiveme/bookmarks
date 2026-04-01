@@ -552,13 +552,15 @@ export default function BookmarkBar(props) {
           }
         >
           <button
-            class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors shrink-0"
+            class="px-0.5 py-0.5 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors leading-none flex-shrink-0"
             onClick={handleAddFolder}
             title="Add new folder"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
+            <sup class="inline-block relative -top-1">
+              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </sup>
           </button>
         </Show>
         
