@@ -34,7 +34,14 @@ export default function BookmarkItem(props) {
     }
     
     // For normal clicks, let the anchor tag try first, then fallback if blocked
-    const currentUrl = window.parent ? window.parent.location.href : window.location.href;
+    let currentUrl;
+    try {
+      currentUrl = window.parent ? window.parent.location.href : window.location.href;
+    } catch (error) {
+      // Cross-origin - can't access parent URL, so we can't detect if navigation worked
+      // Just let the browser handle it naturally
+      return;
+    }
     
     setTimeout(() => {
       try {
@@ -49,9 +56,8 @@ export default function BookmarkItem(props) {
           }
         }
       } catch (error) {
-        // Cross-origin error - we can't check parent URL, so force navigation
-        console.warn('Cross-origin restriction, forcing redirect');
-        window.open(props.item.url, '_blank');
+        // Cross-origin error during check - navigation might have worked, don't force it
+        console.log('Cross-origin - cannot verify navigation');
       }
     }, 500);
   };
