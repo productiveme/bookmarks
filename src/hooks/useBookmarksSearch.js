@@ -1,10 +1,41 @@
 // useBookmarksSearch - Hook for search functionality
 import { createSignal } from 'solid-js';
 
-export function useBookmarksSearch(currentBookmarks) {
+export function useBookmarksSearch(currentBookmarks, bookmarks) {
   const [searchQuery, setSearchQuery] = createSignal('');
   const [filteredBookmarks, setFilteredBookmarks] = createSignal([]);
   const [filteredFolders, setFilteredFolders] = createSignal([]);
+
+  // Recursively search through all bookmarks and folders
+  const searchAllItems = (items, query) => {
+    const lowerQuery = query.toLowerCase();
+    const folders = [];
+    const bookmarksList = [];
+    
+    const searchRecursive = (itemsList) => {
+      for (const item of itemsList) {
+        if (item.type === 'folder') {
+          // Check if folder name matches
+          if (item.name.toLowerCase().includes(lowerQuery)) {
+            folders.push(item);
+          }
+          // Recursively search children
+          if (item.children && item.children.length > 0) {
+            searchRecursive(item.children);
+          }
+        } else {
+          // Check if bookmark name or URL matches
+          if (item.name.toLowerCase().includes(lowerQuery) || 
+              (item.url && item.url.toLowerCase().includes(lowerQuery))) {
+            bookmarksList.push(item);
+          }
+        }
+      }
+    };
+    
+    searchRecursive(items);
+    return { folders, bookmarksList };
+  };
 
   const handleSearchInput = (e) => {
     const query = e.target.value;
@@ -16,21 +47,12 @@ export function useBookmarksSearch(currentBookmarks) {
       return;
     }
     
-    const lowerQuery = query.toLowerCase();
-    const allItems = currentBookmarks();
+    // Search through ALL bookmarks, not just current view
+    const allBookmarks = bookmarks().bookmarks || [];
+    const { folders, bookmarksList } = searchAllItems(allBookmarks, query);
     
-    const matchedFolders = allItems.filter(item => 
-      item.type === 'folder' && item.name.toLowerCase().includes(lowerQuery)
-    );
-    
-    const matchedBookmarks = allItems.filter(item => 
-      item.type !== 'folder' && 
-      (item.name.toLowerCase().includes(lowerQuery) || 
-       (item.url && item.url.toLowerCase().includes(lowerQuery)))
-    );
-    
-    setFilteredFolders(matchedFolders);
-    setFilteredBookmarks(matchedBookmarks);
+    setFilteredFolders(folders);
+    setFilteredBookmarks(bookmarksList);
   };
 
   const handleClearSearch = () => {

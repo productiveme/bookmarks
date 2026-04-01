@@ -45,7 +45,7 @@ export default function BookmarksFullPage() {
     displayBookmarks,
     displayFolders,
     displayAllItems,
-  } = useBookmarksSearch(currentBookmarks);
+  } = useBookmarksSearch(currentBookmarks, bookmarks);
 
   // CRUD operations
   const {
