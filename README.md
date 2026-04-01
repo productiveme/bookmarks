@@ -343,18 +343,14 @@ All core features are now implemented:
 - ✅ **Breadcrumb navigation** - Click any breadcrumb to jump to that folder
 - ✅ **Parent folder navigation** - ".." folder in sidebar to go up one level
 - ✅ **Optimistic updates** - UI updates immediately, syncs to Gist in background
-
+- ✅ **Bookmark icons/favicons** - Async update in the background and caching
+      
 ## Future Enhancements
 
 Potential features to add:
 
 - [ ] Import from browser bookmarks
 - [ ] Export bookmarks to HTML/JSON
-- [ ] Bookmark icons/favicons
-- [ ] Multi-device sync status indicator
-- [ ] Offline support with service workers
-- [ ] Bookmark tags/labels
-- [ ] Recently visited bookmarks
 
 ## License
 
