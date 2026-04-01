@@ -22,44 +22,35 @@ export default function BookmarkItem(props) {
   };
   
   const handleBookmarkClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Don't interfere with editing
     if (props.isEditing) {
-      e.preventDefault();
       return;
     }
     
-    // Don't interfere with cmd/ctrl+click or middle-click (let browser handle it)
-    if (e.metaKey || e.ctrlKey || e.button === 1) {
+    const url = props.item.url;
+    if (!url) return;
+    
+    // Check for modifier keys - open in new tab
+    if (e.metaKey || e.ctrlKey) {
+      window.open(url, '_blank');
       return;
     }
     
-    // For normal clicks, let the anchor tag try first, then fallback if blocked
-    let currentUrl;
+    // Try to navigate parent window, with fallback to new tab
     try {
-      currentUrl = window.parent ? window.parent.location.href : window.location.href;
-    } catch (error) {
-      // Cross-origin - can't access parent URL, so we can't detect if navigation worked
-      // Just let the browser handle it naturally
-      return;
-    }
-    
-    setTimeout(() => {
-      try {
-        const newUrl = window.parent ? window.parent.location.href : window.location.href;
-        // If URL hasn't changed after 500ms, navigation was blocked
-        if (currentUrl === newUrl) {
-          console.warn('Navigation blocked, forcing redirect');
-          if (window.parent && window.parent !== window) {
-            window.parent.location.href = props.item.url;
-          } else {
-            window.location.href = props.item.url;
-          }
-        }
-      } catch (error) {
-        // Cross-origin error during check - navigation might have worked, don't force it
-        console.log('Cross-origin - cannot verify navigation');
+      if (window.parent && window.parent !== window) {
+        window.parent.location.href = url;
+      } else {
+        window.location.href = url;
       }
-    }, 500);
+    } catch (error) {
+      // If blocked, open in new tab
+      console.warn('Navigation blocked, opening in new tab:', error);
+      window.open(url, '_blank');
+    }
   };
   
   const handleEditClick = (e) => {
@@ -217,13 +208,11 @@ export default function BookmarkItem(props) {
         <Show 
           when={props.item.type === 'folder'}
           fallback={
-            <a
-              href={props.item.url}
-              target="_parent"
-              class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 no-underline"
+            <button
+              onClick={handleBookmarkClick}
+              class="pl-3 pr-0 py-1.5 text-[var(--color-text-primary)] text-sm whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 no-underline bg-transparent border-0 cursor-pointer text-left"
               classList={{ 'pointer-events-none': props.isEditing }}
               title={props.item.url}
-              onClick={handleBookmarkClick}
             >
               <FaviconImage 
                 url={props.item.url}
@@ -235,7 +224,7 @@ export default function BookmarkItem(props) {
                 }
               />
               <span class="truncate">{props.item.name}</span>
-            </a>
+            </button>
           }
         >
           <button
