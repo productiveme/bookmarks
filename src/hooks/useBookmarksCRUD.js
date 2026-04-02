@@ -9,17 +9,27 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
   const [editingItem, setEditingItem] = createSignal(null);
 
   const handleDelete = async (index, isFolder) => {
-    if (!confirm('Are you sure you want to delete this ' + (isFolder ? 'folder' : 'bookmark') + '?')) {
+    console.log('[CRUD] handleDelete called with index:', index, 'isFolder:', isFolder);
+    
+    const confirmResult = confirm('Are you sure you want to delete this ' + (isFolder ? 'folder' : 'bookmark') + '?');
+    console.log('[CRUD] Confirm dialog result:', confirmResult);
+    
+    if (!confirmResult) {
+      console.log('[CRUD] User cancelled deletion');
       return;
     }
 
     try {
       console.log('[DELETE] Starting delete - index:', index, 'isFolder:', isFolder);
       console.log('[DELETE] Current path:', currentPath().map(p => `${p.name}[${p.index}]`).join(' / '));
+      console.log('[DELETE] Bookmarks data:', bookmarks());
       
       // Get the item before deleting to clear favicon cache
       let current = bookmarks().bookmarks;
       const pathItems = currentPath();
+      
+      console.log('[DELETE] Path items:', pathItems);
+      console.log('[DELETE] Current bookmarks array length:', current?.length);
       
       // Navigate to current folder
       if (pathItems.length > 0) {
@@ -28,10 +38,13 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
         }
       }
       
+      console.log('[DELETE] After navigation, current array length:', current?.length);
       const itemToDelete = current[index];
+      console.log('[DELETE] Item to delete:', itemToDelete);
       
       // Clear favicon cache if it's a bookmark
       if (!isFolder && itemToDelete?.url) {
+        console.log('[DELETE] Clearing favicon cache for:', itemToDelete.url);
         clearFaviconCache(itemToDelete.url);
       }
       
@@ -42,6 +55,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       console.log('[DELETE] Computed delete path:', path);
       
       const updatedBookmarks = deleteBookmarkAtPath(bookmarks(), path);
+      console.log('[DELETE] Updated bookmarks:', updatedBookmarks);
       
       setBookmarks(updatedBookmarks);
       
@@ -58,6 +72,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       
       updateCurrentView(current, pathItems);
       
+      console.log('[DELETE] Saving to Gist...');
       await saveBookmarks(updatedBookmarks);
       
       console.log('[DELETE] Successfully completed');
