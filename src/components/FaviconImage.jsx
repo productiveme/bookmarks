@@ -35,11 +35,14 @@ async function discoverFavicon(url) {
     }
     
     // List of favicon sources to try (in order of preference)
+    // Skip trying origin favicons directly to avoid browser caching 404s
+    // Use external services that handle discovery properly
     const faviconSources = [
-      `${origin}/favicon.ico`,
-      `${origin}/favicon.png`,
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
       `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-      `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+      `${origin}/favicon.svg`,
+      `${origin}/favicon.png`,
+      `${origin}/favicon.ico`,
     ];
     
     // Try each source by attempting to load as image
@@ -51,7 +54,7 @@ async function discoverFavicon(url) {
           img.onload = () => resolve(true);
           img.onerror = () => reject(false);
           // Set a timeout to avoid hanging
-          setTimeout(() => reject(false), 3000);
+          setTimeout(() => reject(false), 2000);
           img.src = faviconUrl;
         });
         
@@ -66,8 +69,8 @@ async function discoverFavicon(url) {
       }
     }
     
-    // If all fail, use the last one (Google) as fallback
-    const fallbackUrl = faviconSources[faviconSources.length - 1];
+    // If all fail, use Google's service as fallback (it handles missing favicons gracefully)
+    const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     faviconCache.set(domain, fallbackUrl);
     return fallbackUrl;
     
