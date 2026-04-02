@@ -17,6 +17,12 @@ export function clearFaviconCache(url) {
   }
 }
 
+// Export function to clear ALL favicon cache (useful for debugging)
+export function clearAllFaviconCache() {
+  faviconCache.clear();
+  console.log('[FAVICON] Cleared all favicon cache');
+}
+
 async function discoverFavicon(url) {
   try {
     const parsedUrl = new URL(url);
