@@ -8,34 +8,25 @@ export default function BookmarkTile(props) {
   const handleEdit = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[BookmarkTile] Edit clicked for bookmark:', props.bookmark.name);
     props.onEdit();
   };
 
   const handleDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[BookmarkTile] Delete clicked for bookmark:', props.bookmark.name);
     setShowDeleteConfirm(true);
   };
 
   const handleConfirmDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[BookmarkTile] Confirm delete for bookmark:', props.bookmark.name);
-    if (props.onDelete) {
-      console.log('[BookmarkTile] Calling onDelete()');
-      props.onDelete();
-    } else {
-      console.error('[BookmarkTile] onDelete prop is undefined!');
-    }
+    props.onDelete?.();
     setShowDeleteConfirm(false);
   };
 
   const handleCancelDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[BookmarkTile] Cancel delete for bookmark:', props.bookmark.name);
     setShowDeleteConfirm(false);
   };
 

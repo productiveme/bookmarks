@@ -9,19 +9,10 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
   const [editingItem, setEditingItem] = createSignal(null);
 
   const handleDelete = async (index, isFolder) => {
-    console.log('[CRUD] handleDelete called with index:', index, 'isFolder:', isFolder);
-
     try {
-      console.log('[DELETE] Starting delete - index:', index, 'isFolder:', isFolder);
-      console.log('[DELETE] Current path:', currentPath().map(p => `${p.name}[${p.index}]`).join(' / '));
-      console.log('[DELETE] Bookmarks data:', bookmarks());
-      
       // Get the item before deleting to clear favicon cache
       let current = bookmarks().bookmarks;
       const pathItems = currentPath();
-      
-      console.log('[DELETE] Path items:', pathItems);
-      console.log('[DELETE] Current bookmarks array length:', current?.length);
       
       // Navigate to current folder
       if (pathItems.length > 0) {
@@ -30,13 +21,10 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
         }
       }
       
-      console.log('[DELETE] After navigation, current array length:', current?.length);
       const itemToDelete = current[index];
-      console.log('[DELETE] Item to delete:', itemToDelete);
       
       // Clear favicon cache if it's a bookmark
       if (!isFolder && itemToDelete?.url) {
-        console.log('[DELETE] Clearing favicon cache for:', itemToDelete.url);
         clearFaviconCache(itemToDelete.url);
       }
       
@@ -44,10 +32,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       const actualIndex = index;
       const path = [...pathItems.map(p => p.index), actualIndex];
       
-      console.log('[DELETE] Computed delete path:', path);
-      
       const updatedBookmarks = deleteBookmarkAtPath(bookmarks(), path);
-      console.log('[DELETE] Updated bookmarks:', updatedBookmarks);
       
       setBookmarks(updatedBookmarks);
       
@@ -60,16 +45,11 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
         }
       }
       
-      console.log('[DELETE] Updated current view, items count:', current.length);
-      
       updateCurrentView(current, pathItems);
       
-      console.log('[DELETE] Saving to Gist...');
       await saveBookmarks(updatedBookmarks);
-      
-      console.log('[DELETE] Successfully completed');
     } catch (err) {
-      console.error('[DELETE] Error:', err);
+      console.error('Error deleting:', err);
       alert('Error deleting: ' + err.message);
     }
   };
@@ -281,6 +261,14 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       }
       updateCurrentView(viewCurrent, currentPath());
       
+      // Update editingItem index to reflect new position
+      if (editingItem()) {
+        setEditingItem({
+          ...editingItem(),
+          index: index - 1
+        });
+      }
+      
       await saveBookmarks(data);
     } catch (err) {
       alert('Error moving item: ' + err.message);
@@ -313,6 +301,14 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
         }
       }
       updateCurrentView(viewCurrent, currentPath());
+      
+      // Update editingItem index to reflect new position
+      if (editingItem()) {
+        setEditingItem({
+          ...editingItem(),
+          index: index + 1
+        });
+      }
       
       await saveBookmarks(data);
     } catch (err) {

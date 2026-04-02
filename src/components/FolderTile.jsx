@@ -14,34 +14,25 @@ export default function FolderTile(props) {
   const handleEdit = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[FolderTile] Edit clicked for folder:', props.folder.name);
     props.onEdit?.();
   };
 
   const handleDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[FolderTile] Delete clicked for folder:', props.folder.name);
     setShowDeleteConfirm(true);
   };
 
   const handleConfirmDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[FolderTile] Confirm delete for folder:', props.folder.name);
-    if (props.onDelete) {
-      console.log('[FolderTile] Calling onDelete()');
-      props.onDelete?.();
-    } else {
-      console.error('[FolderTile] onDelete prop is undefined!');
-    }
+    props.onDelete?.();
     setShowDeleteConfirm(false);
   };
 
   const handleCancelDelete = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[FolderTile] Cancel delete for folder:', props.folder.name);
     setShowDeleteConfirm(false);
   };
 

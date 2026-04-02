@@ -78,11 +78,11 @@ export default function EditModal(props) {
             
             <Show when={!props.isFolder}>
               <div>
-                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  URL
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
+                  url
                 </label>
                 <input
-                  type="text"
+                  type="url"
                   value={url()}
                   onInput={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com"

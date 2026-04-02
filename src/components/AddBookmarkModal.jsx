@@ -3,12 +3,12 @@ import { Show, For } from 'solid-js';
 
 export default function AddBookmarkModal(props) {
   const handleSave = () => {
-    if (!props.name().trim() || !props.url().trim()) {
-      alert('Please enter both name and URL');
+    if (!props.url().trim()) {
+      alert('Please enter a URL');
       return;
     }
     props.onSave({
-      name: props.name().trim(),
+      name: props.name().trim() || props.url().trim(),
       url: props.url().trim(),
       folderPath: props.selectedFolder ? props.selectedFolder() : null
     });
@@ -38,28 +38,29 @@ export default function AddBookmarkModal(props) {
           
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                Name
+              <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
+                url <span class="text-red-500">*</span>
               </label>
               <input
-                type="text"
-                value={props.name()}
-                onInput={(e) => props.setName(e.target.value)}
-                placeholder="Bookmark name"
+                type="url"
+                value={props.url()}
+                onInput={(e) => props.setUrl(e.target.value)}
+                placeholder="https://example.com"
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 autofocus
+                required
               />
             </div>
             
             <div>
               <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                URL
+                Name <span class="text-[var(--color-text-secondary)] text-xs">(optional)</span>
               </label>
               <input
                 type="text"
-                value={props.url()}
-                onInput={(e) => props.setUrl(e.target.value)}
-                placeholder="https://example.com"
+                value={props.name()}
+                onInput={(e) => props.setName(e.target.value)}
+                placeholder="Bookmark name (defaults to URL if empty)"
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
             </div>
