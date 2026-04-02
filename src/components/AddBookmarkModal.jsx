@@ -1,16 +1,16 @@
 // AddBookmarkModal - Modal for adding new bookmarks
-import { Show, For } from 'solid-js';
+import { Show, For } from "solid-js";
 
 export default function AddBookmarkModal(props) {
   const handleSave = () => {
     if (!props.url().trim()) {
-      alert('Please enter a URL');
+      alert("Please enter a URL");
       return;
     }
     props.onSave({
       name: props.name().trim() || props.url().trim(),
       url: props.url().trim(),
-      folderPath: props.selectedFolder ? props.selectedFolder() : null
+      folderPath: props.selectedFolder ? props.selectedFolder() : null,
     });
   };
 
@@ -24,37 +24,22 @@ export default function AddBookmarkModal(props) {
 
   return (
     <Show when={props.show}>
-      <div 
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" 
+      <div
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
         onClick={handleBackdropClick}
       >
-        <div 
-          class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-md w-full p-6" 
+        <div
+          class="bg-[var(--color-bg-primary)] rounded-lg shadow-xl max-w-md w-full p-6"
           onClick={handleModalClick}
         >
           <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
             Add Bookmark
           </h2>
-          
+
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
-                url <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="url"
-                value={props.url()}
-                onInput={(e) => props.setUrl(e.target.value)}
-                placeholder="https://example.com"
-                class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                autofocus
-                required
-              />
-            </div>
-            
-            <div>
               <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                Name <span class="text-[var(--color-text-secondary)] text-xs">(optional)</span>
+                Name
               </label>
               <input
                 type="text"
@@ -64,15 +49,35 @@ export default function AddBookmarkModal(props) {
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
             </div>
-
+            <div>
+              <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
+                Url
+              </label>
+              <input
+                type="url"
+                value={props.url()}
+                onInput={(e) => props.setUrl(e.target.value)}
+                placeholder="https://example.com"
+                class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                autofocus
+                autocapitalize="none"
+                required
+              />
+            </div>
             <Show when={props.folderList && props.folderList.length > 0}>
               <div>
                 <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                   Folder
                 </label>
                 <select
-                  value={props.selectedFolder ? JSON.stringify(props.selectedFolder()) : '[]'}
-                  onChange={(e) => props.setSelectedFolder(JSON.parse(e.target.value))}
+                  value={
+                    props.selectedFolder
+                      ? JSON.stringify(props.selectedFolder())
+                      : "[]"
+                  }
+                  onChange={(e) =>
+                    props.setSelectedFolder(JSON.parse(e.target.value))
+                  }
                   class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 >
                   <For each={props.folderList}>
@@ -86,7 +91,7 @@ export default function AddBookmarkModal(props) {
               </div>
             </Show>
           </div>
-          
+
           <div class="flex gap-3 mt-6">
             <button
               onClick={handleSave}
