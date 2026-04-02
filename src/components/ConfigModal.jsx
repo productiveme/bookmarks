@@ -117,6 +117,9 @@ export default function ConfigModal() {
               onInput={(e) => setToken(e.target.value)}
               class="w-full px-3 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               placeholder="ghp_..."
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
             />
             <p class="text-xs text-[var(--color-text-secondary)] mt-1">
               Create a token at <a href="https://github.com/settings/tokens" target="_blank" class="text-[var(--color-accent)] hover:underline">github.com/settings/tokens</a> with "gist" scope
@@ -133,6 +136,9 @@ export default function ConfigModal() {
               onInput={(e) => setGistIdLocal(e.target.value)}
               class="w-full px-3 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               placeholder="abc123def456..."
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
             />
             <p class="text-xs text-[var(--color-text-secondary)] mt-1">
               Or <button onClick={handleCreateGist} disabled={loading()} class="text-[var(--color-accent)] hover:underline disabled:opacity-50">

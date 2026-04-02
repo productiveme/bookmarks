@@ -73,6 +73,7 @@ export default function EditModal(props) {
                 placeholder="Name"
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 autofocus
+                autocapitalize="words"
               />
             </div>
             
@@ -87,6 +88,9 @@ export default function EditModal(props) {
                   onInput={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com"
                   class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  autocapitalize="none"
+                  autocorrect="off"
+                  spellcheck="false"
                 />
               </div>
             </Show>

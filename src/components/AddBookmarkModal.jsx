@@ -8,7 +8,7 @@ export default function AddBookmarkModal(props) {
       return;
     }
     props.onSave({
-      name: props.name().trim() || props.url().trim(),
+      name: props.name().trim(),
       url: props.url().trim(),
       folderPath: props.selectedFolder ? props.selectedFolder() : null,
     });
@@ -38,20 +38,8 @@ export default function AddBookmarkModal(props) {
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                value={props.name()}
-                onInput={(e) => props.setName(e.target.value)}
-                placeholder="Bookmark name (defaults to URL if empty)"
-                class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-              />
-            </div>
-            <div>
               <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
-                Url
+                url <span class="text-red-500">*</span>
               </label>
               <input
                 type="url"
@@ -61,7 +49,23 @@ export default function AddBookmarkModal(props) {
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 autofocus
                 autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
                 required
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                Name <span class="text-[var(--color-text-secondary)] text-xs">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={props.name()}
+                onInput={(e) => props.setName(e.target.value)}
+                placeholder="Bookmark name (defaults to URL if empty)"
+                class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                autocapitalize="words"
               />
             </div>
             <Show when={props.folderList && props.folderList.length > 0}>

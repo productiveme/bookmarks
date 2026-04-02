@@ -42,6 +42,8 @@ export default function BookmarksHeader(props) {
                 onInput={props.onSearchInput}
                 placeholder="Search bookmarks and folders..."
                 class="px-4 py-2 pr-10 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded focus:outline-none focus:border-[var(--color-accent)] w-full sm:w-64"
+                autocapitalize="none"
+                autocorrect="off"
               />
               <Show when={props.searchQuery.trim()}>
                 <button
