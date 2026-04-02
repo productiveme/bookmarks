@@ -1,6 +1,7 @@
 // useBookmarkBarEdit - Hook for editing, adding, deleting, and moving bookmarks/folders in the bar
 import { createSignal } from 'solid-js';
 import { deleteBookmarkAtPath } from '../utils/yaml.js';
+import { clearFaviconCache } from '../components/FaviconImage.jsx';
 
 export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateUIAfterChange, saveBookmarks, addBookmarkToCurrentPath, scrollToEnd) {
   const [editingIndex, setEditingIndex] = createSignal(null);
@@ -103,6 +104,18 @@ export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateU
 
   const handleDelete = async (index) => {
     try {
+      // Get the item before deleting to clear favicon cache
+      let current = bookmarks().bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      const itemToDelete = current[index];
+      
+      // Clear favicon cache if it's a bookmark
+      if (itemToDelete?.type === 'link' && itemToDelete?.url) {
+        clearFaviconCache(itemToDelete.url);
+      }
+      
       // Build the full path to this bookmark
       const path = [...currentPath().map(p => p.index), index];
       

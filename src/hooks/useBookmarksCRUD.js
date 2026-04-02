@@ -1,6 +1,7 @@
 // useBookmarksCRUD - Hook for create, update, delete operations
 import { createSignal } from 'solid-js';
 import { deleteBookmarkAtPath } from '../utils/yaml.js';
+import { clearFaviconCache } from '../components/FaviconImage.jsx';
 
 export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, updateCurrentView, saveBookmarks) {
   const [showEditModal, setShowEditModal] = createSignal(false);
@@ -16,6 +17,18 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       console.log('[DELETE] Starting delete - index:', index, 'isFolder:', isFolder);
       console.log('[DELETE] Current path:', currentPath().map(p => `${p.name}[${p.index}]`).join(' / '));
       
+      // Get the item before deleting to clear favicon cache
+      let current = bookmarks().bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      const itemToDelete = current[index];
+      
+      // Clear favicon cache if it's a bookmark
+      if (!isFolder && itemToDelete?.url) {
+        clearFaviconCache(itemToDelete.url);
+      }
+      
       // index is already correct from displayAllItems()
       const actualIndex = index;
       const path = [...currentPath().map(p => p.index), actualIndex];
@@ -27,7 +40,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       setBookmarks(updatedBookmarks);
       
       // Update current view
-      let current = updatedBookmarks.bookmarks;
+      current = updatedBookmarks.bookmarks;
       for (const pathItem of currentPath()) {
         const folder = current[pathItem.index];
         if (folder && folder.type === 'folder') {

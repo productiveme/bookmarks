@@ -5,6 +5,18 @@ import { createSignal, onMount, Show } from 'solid-js';
 // TODO: Replace with Redis cache in the future for persistence
 const faviconCache = new Map();
 
+// Export function to clear favicon cache for a specific URL
+export function clearFaviconCache(url) {
+  try {
+    const parsedUrl = new URL(url);
+    const domain = parsedUrl.hostname;
+    faviconCache.delete(domain);
+    console.log(`[FAVICON] Cleared cache for domain: ${domain}`);
+  } catch (err) {
+    console.error('[FAVICON] Error clearing cache:', err);
+  }
+}
+
 async function discoverFavicon(url) {
   try {
     const parsedUrl = new URL(url);
