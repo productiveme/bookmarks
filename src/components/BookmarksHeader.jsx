@@ -1,6 +1,7 @@
 // BookmarksHeader - Header with title, search, breadcrumbs, and refresh
 import { Show, For } from 'solid-js';
 import HomeIcon from './HomeIcon.jsx';
+import BookmarkIcon from './BookmarkIcon.jsx';
 
 export default function BookmarksHeader(props) {
   return (
@@ -9,14 +10,20 @@ export default function BookmarksHeader(props) {
         <div class="flex items-center gap-3">
           <Show 
             when={props.configured}
-            fallback={<h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)]">📚 Bookmarks</h1>}
+            fallback={
+              <h1 class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                <BookmarkIcon class="w-6 h-6 text-[var(--color-accent)]" />
+                Bookmarks
+              </h1>
+            }
           >
             <button
               onClick={props.onRefresh}
-              class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+              class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors flex items-center gap-2"
               title="Reload bookmarks from Gist"
             >
-              📚 Bookmarks
+              <BookmarkIcon class="w-6 h-6 text-[var(--color-accent)]" />
+              Bookmarks
             </button>
           </Show>
           <Show when={!props.loading && !props.configured}>
