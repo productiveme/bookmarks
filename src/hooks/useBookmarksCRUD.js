@@ -19,9 +19,15 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       
       // Get the item before deleting to clear favicon cache
       let current = bookmarks().bookmarks;
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
+      const pathItems = currentPath();
+      
+      // Navigate to current folder
+      if (pathItems.length > 0) {
+        for (const pathItem of pathItems) {
+          current = current[pathItem.index].children;
+        }
       }
+      
       const itemToDelete = current[index];
       
       // Clear favicon cache if it's a bookmark
@@ -31,7 +37,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       
       // index is already correct from displayAllItems()
       const actualIndex = index;
-      const path = [...currentPath().map(p => p.index), actualIndex];
+      const path = [...pathItems.map(p => p.index), actualIndex];
       
       console.log('[DELETE] Computed delete path:', path);
       
@@ -41,7 +47,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       
       // Update current view
       current = updatedBookmarks.bookmarks;
-      for (const pathItem of currentPath()) {
+      for (const pathItem of pathItems) {
         const folder = current[pathItem.index];
         if (folder && folder.type === 'folder') {
           current = folder.children || [];
@@ -50,7 +56,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
       
       console.log('[DELETE] Updated current view, items count:', current.length);
       
-      updateCurrentView(current, currentPath());
+      updateCurrentView(current, pathItems);
       
       await saveBookmarks(updatedBookmarks);
       

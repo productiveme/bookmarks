@@ -106,9 +106,15 @@ export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateU
     try {
       // Get the item before deleting to clear favicon cache
       let current = bookmarks().bookmarks;
-      for (const pathItem of currentPath()) {
-        current = current[pathItem.index].children;
+      const pathItems = currentPath();
+      
+      // Navigate to current folder
+      if (pathItems.length > 0) {
+        for (const pathItem of pathItems) {
+          current = current[pathItem.index].children;
+        }
       }
+      
       const itemToDelete = current[index];
       
       // Clear favicon cache if it's a bookmark
@@ -117,7 +123,7 @@ export function useBookmarkBarEdit(bookmarks, setBookmarks, currentPath, updateU
       }
       
       // Build the full path to this bookmark
-      const path = [...currentPath().map(p => p.index), index];
+      const path = [...pathItems.map(p => p.index), index];
       
       // Delete from bookmarks data
       const updatedBookmarks = deleteBookmarkAtPath(bookmarks(), path);
