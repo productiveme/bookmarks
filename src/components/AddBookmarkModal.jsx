@@ -45,7 +45,7 @@ export default function AddBookmarkModal(props) {
                 type="text"
                 value={props.name()}
                 onInput={(e) => props.setName(e.target.value)}
-                placeholder="Bookmark name (defaults to URL if empty)"
+                placeholder="Bookmark name"
                 class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 autocapitalize="words"
               />
