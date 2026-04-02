@@ -32,6 +32,7 @@ export default function BookmarksFullPage() {
     folders,
     updateCurrentView,
     navigateToFolder,
+    navigateToFolderFromSearch,
     navigateToBreadcrumb,
     handleFolderTileClick,
     handleNavigateUp,
@@ -58,6 +59,8 @@ export default function BookmarksFullPage() {
     handleSaveEdit,
     handleCancelEdit,
     handleAddFolder,
+    handleMoveUp,
+    handleMoveDown,
   } = useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, updateCurrentView, saveBookmarks);
 
   // Drag and drop
@@ -84,6 +87,19 @@ export default function BookmarksFullPage() {
   const [prefilledName, setPrefilledName] = createSignal('');
   const [prefilledUrl, setPrefilledUrl] = createSignal('');
   const [selectedFolder, setSelectedFolder] = createSignal([]);
+
+  // Handle folder click with search context awareness
+  const handleFolderClickWrapper = (folder, index) => {
+    if (searchQuery().trim()) {
+      // When searching, find the full path to the folder
+      navigateToFolderFromSearch(folder);
+      // Clear search after navigation
+      handleClearSearch();
+    } else {
+      // When browsing normally, navigate using the index
+      handleFolderTileClick(folder, index);
+    }
+  };
 
   // Watch for bookmarks to load and initialize the view (only at root)
   createEffect(() => {
@@ -335,7 +351,7 @@ export default function BookmarksFullPage() {
                     >
                       <FolderTile
                         folder={item}
-                        onClick={() => handleFolderTileClick(item, index())}
+                        onClick={() => handleFolderClickWrapper(item, index())}
                         onEdit={() => handleEdit(item, index(), true)}
                         onDelete={() => handleDelete(index(), true)}
                         draggable={!searchQuery().trim()}
@@ -389,6 +405,11 @@ export default function BookmarksFullPage() {
         folderList={getFolderList(bookmarks())}
         onSave={handleSaveEdit}
         onCancel={handleCancelEdit}
+        itemIndex={editingItem()?.index}
+        totalItems={currentBookmarks().length}
+        onMoveUp={handleMoveUp}
+        onMoveDown={handleMoveDown}
+        isSearching={searchQuery().trim() !== ''}
       />
 
       {/* Add Bookmark Modal */}

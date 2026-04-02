@@ -31,6 +31,22 @@ export default function EditModal(props) {
     e.stopPropagation();
   };
 
+  const handleMoveUp = () => {
+    props.onMoveUp?.(props.itemIndex);
+  };
+
+  const handleMoveDown = () => {
+    props.onMoveDown?.(props.itemIndex, props.totalItems);
+  };
+
+  const canMoveUp = () => {
+    return props.itemIndex > 0 && !props.isSearching;
+  };
+
+  const canMoveDown = () => {
+    return props.itemIndex < props.totalItems - 1 && !props.isSearching;
+  };
+
   return (
     <Show when={props.show}>
       <div 
@@ -93,6 +109,39 @@ export default function EditModal(props) {
                     )}
                   </For>
                 </select>
+              </div>
+            </Show>
+
+            {/* Move Up/Down buttons - only show when not searching */}
+            <Show when={!props.isSearching && (canMoveUp() || canMoveDown())}>
+              <div>
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  Reorder
+                </label>
+                <div class="flex gap-2">
+                  <button
+                    onClick={handleMoveUp}
+                    disabled={!canMoveUp()}
+                    class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    title="Move up"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                    Move Up
+                  </button>
+                  <button
+                    onClick={handleMoveDown}
+                    disabled={!canMoveDown()}
+                    class="flex-1 px-4 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    title="Move down"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    Move Down
+                  </button>
+                </div>
               </div>
             </Show>
           </div>

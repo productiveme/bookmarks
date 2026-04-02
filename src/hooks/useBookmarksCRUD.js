@@ -228,6 +228,72 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
     }
   };
 
+  const handleMoveUp = async (index) => {
+    if (index <= 0) return; // Already at the top
+
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      // Navigate to current folder
+      let current = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      // Swap with previous item
+      [current[index - 1], current[index]] = [current[index], current[index - 1]];
+      
+      setBookmarks(data);
+      
+      // Update current view
+      let viewCurrent = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        const folder = viewCurrent[pathItem.index];
+        if (folder && folder.type === 'folder') {
+          viewCurrent = folder.children || [];
+        }
+      }
+      updateCurrentView(viewCurrent, currentPath());
+      
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error moving item: ' + err.message);
+    }
+  };
+
+  const handleMoveDown = async (index, totalItems) => {
+    if (index >= totalItems - 1) return; // Already at the bottom
+
+    try {
+      const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      // Navigate to current folder
+      let current = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        current = current[pathItem.index].children;
+      }
+      
+      // Swap with next item
+      [current[index], current[index + 1]] = [current[index + 1], current[index]];
+      
+      setBookmarks(data);
+      
+      // Update current view
+      let viewCurrent = data.bookmarks;
+      for (const pathItem of currentPath()) {
+        const folder = viewCurrent[pathItem.index];
+        if (folder && folder.type === 'folder') {
+          viewCurrent = folder.children || [];
+        }
+      }
+      updateCurrentView(viewCurrent, currentPath());
+      
+      await saveBookmarks(data);
+    } catch (err) {
+      alert('Error moving item: ' + err.message);
+    }
+  };
+
   return {
     showEditModal,
     showAddModal,
@@ -238,5 +304,7 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
     handleSaveEdit,
     handleCancelEdit,
     handleAddFolder,
+    handleMoveUp,
+    handleMoveDown,
   };
 }

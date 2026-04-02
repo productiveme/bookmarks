@@ -90,7 +90,7 @@ export default function FolderTile(props) {
         )}
         <div class="flex items-center gap-1">
           {!isParentFolder && (
-            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={handleEdit}
                 class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"

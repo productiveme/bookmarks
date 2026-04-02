@@ -24,6 +24,40 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
     updateCurrentView(children, newPath);
   };
 
+  // Find the full path to a folder in the bookmark tree
+  const findFolderPath = (items, targetFolder, currentPathArray = []) => {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Check if this is the folder we're looking for (by reference)
+      if (item === targetFolder) {
+        return [...currentPathArray, { name: item.name, index: i }];
+      }
+      
+      // If it's a folder, search its children
+      if (item.type === 'folder' && item.children) {
+        const found = findFolderPath(
+          item.children, 
+          targetFolder, 
+          [...currentPathArray, { name: item.name, index: i }]
+        );
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const navigateToFolderFromSearch = (folder) => {
+    // Find the full path to this folder in the bookmark tree
+    const path = findFolderPath(bookmarks().bookmarks || [], folder);
+    
+    if (path) {
+      // Navigate to the folder using the full path
+      const children = folder.children || [];
+      updateCurrentView(children, path);
+    }
+  };
+
   const navigateToBreadcrumb = async (targetIndex) => {
     if (targetIndex === -1) {
       // Navigate to root - reload from Gist
@@ -59,6 +93,7 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
     folders,
     updateCurrentView,
     navigateToFolder,
+    navigateToFolderFromSearch,
     navigateToBreadcrumb,
     handleFolderTileClick,
     handleNavigateUp,
