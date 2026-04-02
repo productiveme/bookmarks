@@ -6,6 +6,7 @@ import { useBookmarksNavigation } from '../hooks/useBookmarksNavigation.js';
 import { useBookmarksSearch } from '../hooks/useBookmarksSearch.js';
 import { useBookmarksCRUD } from '../hooks/useBookmarksCRUD.js';
 import { useBookmarksDragDrop } from '../hooks/useBookmarksDragDrop.js';
+import { clearFaviconCache } from './FaviconImage.jsx';
 import BookmarksHeader from './BookmarksHeader.jsx';
 import BookmarksSidebar from './BookmarksSidebar.jsx';
 import BookmarkTile from './BookmarkTile.jsx';
@@ -136,6 +137,11 @@ export default function BookmarksFullPage() {
   const handleSaveAdd = async (bookmarkData) => {
     try {
       const data = JSON.parse(JSON.stringify(bookmarks()));
+      
+      // Clear favicon cache for this URL to force fresh discovery
+      if (bookmarkData.url) {
+        clearFaviconCache(bookmarkData.url);
+      }
       
       // Navigate to target folder
       let target = data.bookmarks;

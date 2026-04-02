@@ -63,6 +63,15 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
     try {
       const { item, index, isFolder } = editingItem();
       
+      // Clear favicon cache if URL changed (for bookmarks)
+      if (!isFolder && editedData.url && editedData.url !== item.url) {
+        clearFaviconCache(editedData.url);
+        // Also clear old URL cache
+        if (item.url) {
+          clearFaviconCache(item.url);
+        }
+      }
+      
       // For folders, check if parent folder changed
       if (isFolder) {
         const actualIndex = index;
