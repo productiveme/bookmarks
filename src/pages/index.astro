@@ -65,11 +65,10 @@ const bookmarkletCode = generateBookmarklet(appUrl);
               <div class="flex items-center gap-2 mt-2">
                 <a
                   href={bookmarkletCode}
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors no-underline"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors no-underline font-medium"
                   onclick="alert('Drag this button to your bookmarks bar!'); return false;"
                 >
-                  <img src="/favicon.svg" alt="Bookmarks" class="w-5 h-5" />
-                  <span>Bookmarks Bar</span>
+                  <span>「Bookmarks」</span>
                 </a>
                 <button
                   id="copy-bookmarklet"
