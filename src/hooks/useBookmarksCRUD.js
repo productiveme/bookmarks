@@ -10,14 +10,6 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
 
   const handleDelete = async (index, isFolder) => {
     console.log('[CRUD] handleDelete called with index:', index, 'isFolder:', isFolder);
-    
-    const confirmResult = confirm('Are you sure you want to delete this ' + (isFolder ? 'folder' : 'bookmark') + '?');
-    console.log('[CRUD] Confirm dialog result:', confirmResult);
-    
-    if (!confirmResult) {
-      console.log('[CRUD] User cancelled deletion');
-      return;
-    }
 
     try {
       console.log('[DELETE] Starting delete - index:', index, 'isFolder:', isFolder);

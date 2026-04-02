@@ -1,7 +1,10 @@
 // BookmarkTile - Individual bookmark tile in grid view
+import { Show, createSignal } from 'solid-js';
 import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkTile(props) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
+
   const handleEdit = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -13,13 +16,27 @@ export default function BookmarkTile(props) {
     e.preventDefault();
     e.stopPropagation();
     console.log('[BookmarkTile] Delete clicked for bookmark:', props.bookmark.name);
-    console.log('[BookmarkTile] onDelete prop:', props.onDelete);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[BookmarkTile] Confirm delete for bookmark:', props.bookmark.name);
     if (props.onDelete) {
       console.log('[BookmarkTile] Calling onDelete()');
       props.onDelete();
     } else {
       console.error('[BookmarkTile] onDelete prop is undefined!');
     }
+    setShowDeleteConfirm(false);
+  };
+
+  const handleCancelDelete = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[BookmarkTile] Cancel delete for bookmark:', props.bookmark.name);
+    setShowDeleteConfirm(false);
   };
 
   const handleDragStart = (e) => {
@@ -28,57 +45,84 @@ export default function BookmarkTile(props) {
   };
 
   return (
-    <div 
-      class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-move"
-      classList={{
-        'opacity-50': props.isDragging,
-        'cursor-grab': props.draggable,
-        'cursor-grabbing': props.isDragging,
-      }}
-      draggable={props.draggable}
-      onDragStart={handleDragStart}
-      onDragEnd={props.onDragEnd}
+    <Show
+      when={!showDeleteConfirm()}
+      fallback={
+        <div class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all">
+          <div class="flex flex-col items-center justify-center gap-3 py-2">
+            <span class="text-sm text-[var(--color-text-primary)] text-center">
+              Delete "{props.bookmark.name}"?
+            </span>
+            <div class="flex gap-2">
+              <button
+                onClick={handleConfirmDelete}
+                class="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                onClick={handleCancelDelete}
+                class="px-4 py-2 text-sm bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     >
-      <div class="flex items-start justify-between mb-2">
-        <FaviconImage 
-          url={props.bookmark.url}
-          class="w-5 h-5 flex-shrink-0"
-          fallbackIcon={
-            <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-          }
-        />
-        <div class="flex gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={handleEdit}
-            class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-            title="Edit"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-          <button
-            onClick={handleDelete}
-            class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-            title="Delete"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <a
-        href={props.bookmark.url}
-        class="block"
+      <div 
+        class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-move"
+        classList={{
+          'opacity-50': props.isDragging,
+          'cursor-grab': props.draggable,
+          'cursor-grabbing': props.isDragging,
+        }}
+        draggable={props.draggable}
+        onDragStart={handleDragStart}
+        onDragEnd={props.onDragEnd}
       >
-        <div class="flex items-start gap-2 mb-1">
-          <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{props.bookmark.name}</h3>
+        <div class="flex items-start justify-between mb-2">
+          <FaviconImage 
+            url={props.bookmark.url}
+            class="w-5 h-5 flex-shrink-0"
+            fallbackIcon={
+              <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            }
+          />
+          <div class="flex gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={handleEdit}
+              class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+              title="Edit"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleDelete}
+              class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
+              title="Delete"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <p class="text-xs text-[var(--color-text-secondary)] truncate">{props.bookmark.url}</p>
-      </a>
-    </div>
+        <a
+          href={props.bookmark.url}
+          class="block"
+        >
+          <div class="flex items-start gap-2 mb-1">
+            <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{props.bookmark.name}</h3>
+          </div>
+          <p class="text-xs text-[var(--color-text-secondary)] truncate">{props.bookmark.url}</p>
+        </a>
+      </div>
+    </Show>
   );
 }
