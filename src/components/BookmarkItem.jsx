@@ -6,12 +6,19 @@ export default function BookmarkItem(props) {
   const [editName, setEditName] = createSignal('');
   const [editUrl, setEditUrl] = createSignal('');
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
+  let formRef;
   
   // Update edit values when item changes (e.g., after moving)
   createEffect(() => {
     if (props.isEditing) {
       setEditName(props.item.name);
       setEditUrl(props.item.url || '');
+      // Scroll form into view after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        if (formRef) {
+          formRef.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        }
+      }, 100);
     }
   });
   
@@ -133,6 +140,7 @@ export default function BookmarkItem(props) {
           when={showDeleteConfirm()}
           fallback={
             <form 
+              ref={formRef}
               onSubmit={handleFormSubmit}
               class="flex items-center gap-1 px-2 py-1 rounded bg-[var(--color-bg-hover)]"
             >

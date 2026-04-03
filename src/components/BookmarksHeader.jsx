@@ -6,6 +6,7 @@ import BookmarkIcon from './BookmarkIcon.jsx';
 export default function BookmarksHeader(props) {
   const [showMenu, setShowMenu] = createSignal(false);
   let menuRef;
+  let searchInputRef;
   
   // Close menu when clicking outside
   const handleClickOutside = (e) => {
@@ -14,12 +15,23 @@ export default function BookmarksHeader(props) {
     }
   };
   
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e) => {
+    // Focus search input when pressing "/"
+    if (e.key === '/' && searchInputRef && document.activeElement !== searchInputRef) {
+      e.preventDefault();
+      searchInputRef.focus();
+    }
+  };
+  
   onMount(() => {
     document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
   });
   
   onCleanup(() => {
     document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', handleKeyDown);
   });
   
   const handleImport = () => {
@@ -157,6 +169,7 @@ export default function BookmarksHeader(props) {
             </svg>
             <input
               type="text"
+              ref={searchInputRef}
               value={props.searchQuery}
               onInput={props.onSearchInput}
               placeholder="Search..."
