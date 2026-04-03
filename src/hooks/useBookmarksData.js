@@ -1,7 +1,7 @@
 // useBookmarksData - Hook for loading and managing bookmarks data
 import { createSignal, onMount } from 'solid-js';
 import { getGithubToken, getGistId } from '../utils/storage.js';
-import { parseYaml, stringifyYaml } from '../utils/yaml.js';
+import { createStorageAdapter } from '../utils/storage-adapters.js';
 
 export function useBookmarksData() {
   const [bookmarks, setBookmarks] = createSignal({ bookmarks: [] });
@@ -14,14 +14,9 @@ export function useBookmarksData() {
       const token = getGithubToken();
       const gistId = getGistId();
       
-      const response = await fetch(`/api/bookmarks?token=${encodeURIComponent(token)}&gistId=${encodeURIComponent(gistId)}`);
-      const data = await response.json();
+      const storage = createStorageAdapter(token, gistId);
+      const parsed = await storage.load();
       
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      const parsed = parseYaml(data.content);
       setBookmarks(parsed);
       setLoading(false);
       return parsed.bookmarks || [];
@@ -36,19 +31,9 @@ export function useBookmarksData() {
     try {
       const token = getGithubToken();
       const gistId = getGistId();
-      const yamlContent = stringifyYaml(updatedBookmarks);
       
-      const response = await fetch('/api/bookmarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, gistId, content: yamlContent })
-      });
-      
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      const storage = createStorageAdapter(token, gistId);
+      await storage.save(updatedBookmarks);
     } catch (err) {
       throw new Error('Failed to save: ' + err.message);
     }

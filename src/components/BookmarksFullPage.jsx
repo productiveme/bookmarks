@@ -7,6 +7,7 @@ import { useBookmarksSearch } from '../hooks/useBookmarksSearch.js';
 import { useBookmarksCRUD } from '../hooks/useBookmarksCRUD.js';
 import { useBookmarksDragDrop } from '../hooks/useBookmarksDragDrop.js';
 import { clearFaviconCache } from './FaviconImage.jsx';
+import { parseNetscapeBookmarks, generateNetscapeBookmarks } from '../utils/netscape-bookmarks.js';
 import BookmarksHeader from './BookmarksHeader.jsx';
 import BookmarksSidebar from './BookmarksSidebar.jsx';
 import BookmarkTile from './BookmarkTile.jsx';
@@ -102,10 +103,14 @@ export default function BookmarksFullPage() {
     }
   };
 
+  // Track if we've initialized the view
+  const [viewInitialized, setViewInitialized] = createSignal(false);
+  
   // Watch for bookmarks to load and initialize the view (only at root)
   createEffect(() => {
-    if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
+    if (!viewInitialized() && !loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
       updateCurrentView(bookmarks().bookmarks, []);
+      setViewInitialized(true);
     }
   });
   
@@ -193,6 +198,91 @@ export default function BookmarksFullPage() {
     setPrefilledUrl('');
   };
 
+  const handleImport = () => {
+    // Create hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.html';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const imported = parseNetscapeBookmarks(text);
+        
+        if (!imported.bookmarks || imported.bookmarks.length === 0) {
+          alert('No bookmarks found in the file');
+          return;
+        }
+        
+        // Deep clone current bookmarks
+        const data = JSON.parse(JSON.stringify(bookmarks()));
+        
+        // Navigate to current path
+        let target = data.bookmarks;
+        for (const pathItem of currentPath()) {
+          if (target[pathItem.index] && target[pathItem.index].type === 'folder') {
+            target = target[pathItem.index].children;
+          }
+        }
+        
+        // Append imported bookmarks to current location
+        target.push(...imported.bookmarks);
+        
+        // Update state
+        setBookmarks(data);
+        
+        // Update current view
+        let viewCurrent = data.bookmarks;
+        for (const pathItem of currentPath()) {
+          const folder = viewCurrent[pathItem.index];
+          if (folder && folder.type === 'folder') {
+            viewCurrent = folder.children || [];
+          }
+        }
+        updateCurrentView(viewCurrent, currentPath());
+        
+        // Save to Gist
+        await saveBookmarks(data);
+        
+        alert(`Successfully imported ${imported.bookmarks.length} item(s)`);
+      } catch (err) {
+        console.error('Import error:', err);
+        alert('Error importing bookmarks: ' + err.message);
+      }
+    };
+    
+    input.click();
+  };
+
+  const handleExport = () => {
+    try {
+      // Generate HTML from current path
+      const html = generateNetscapeBookmarks(bookmarks(), currentPath());
+      
+      // Create blob and download
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Generate filename based on current location
+      const folderName = currentPath().length > 0 
+        ? currentPath()[currentPath().length - 1].name 
+        : 'all';
+      const date = new Date().toISOString().split('T')[0];
+      a.download = `bookmarks-${folderName}-${date}.html`;
+      
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Error exporting bookmarks: ' + err.message);
+    }
+  };
+
   return (
     <div class="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
       {/* Header */}
@@ -205,6 +295,8 @@ export default function BookmarksFullPage() {
         onClearSearch={handleClearSearch}
         onRefresh={() => navigateToBreadcrumb(-1)}
         onNavigateToBreadcrumb={navigateToBreadcrumb}
+        onImport={handleImport}
+        onExport={handleExport}
       />
 
       {/* Main Content */}

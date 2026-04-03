@@ -58,7 +58,7 @@ export default function EditModal(props) {
           onClick={handleModalClick}
         >
           <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
-            {props.isFolder ? "Edit Folder" : "Edit Bookmark"}
+            {props.isFolder ? "Edit Folder" : (props.item?.type === 'bookmarklet' ? "Edit Bookmarklet" : "Edit Bookmark")}
           </h2>
 
           <div class="space-y-4">
@@ -77,7 +77,24 @@ export default function EditModal(props) {
               />
             </div>
 
-            <Show when={!props.isFolder}>
+            <Show when={!props.isFolder && props.item?.type === 'bookmarklet'}>
+              <div>
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+                  Code (read-only)
+                </label>
+                <textarea
+                  value={url()}
+                  readonly
+                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] font-mono text-xs resize-none opacity-75 cursor-not-allowed"
+                  rows="4"
+                />
+                <p class="text-xs text-[var(--color-text-secondary)] mt-1">
+                  Bookmarklet code cannot be edited. Use the copy button to copy it.
+                </p>
+              </div>
+            </Show>
+
+            <Show when={!props.isFolder && props.item?.type !== 'bookmarklet'}>
               <div>
                 <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
                   Url

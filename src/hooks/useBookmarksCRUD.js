@@ -10,11 +10,10 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
 
   const handleDelete = async (index, isFolder) => {
     try {
-      // Get the item before deleting to clear favicon cache
-      let current = bookmarks().bookmarks;
       const pathItems = currentPath();
       
-      // Navigate to current folder
+      // Get current folder items
+      let current = bookmarks().bookmarks;
       if (pathItems.length > 0) {
         for (const pathItem of pathItems) {
           current = current[pathItem.index].children;

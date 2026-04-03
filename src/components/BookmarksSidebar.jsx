@@ -1,7 +1,28 @@
 // BookmarksSidebar - Left sidebar with folder list (hidden on mobile)
-import { Show, For } from 'solid-js';
+import { Show, For, createSignal } from 'solid-js';
 
 export default function BookmarksSidebar(props) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(null); // null or folder index
+  
+  const handleDeleteClick = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDeleteConfirm(index);
+  };
+  
+  const handleConfirmDelete = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    props.onDelete(index);
+    setShowDeleteConfirm(null);
+  };
+  
+  const handleCancelDelete = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDeleteConfirm(null);
+  };
+  
   return (
     <div class="hidden md:block w-64 bg-[var(--color-bg-primary)] border-r border-[var(--color-border)] p-4 overflow-y-auto">
       <div class="flex items-center justify-between mb-3">
@@ -39,37 +60,64 @@ export default function BookmarksSidebar(props) {
         
         <For each={props.folders}>
           {(folder, index) => (
-            <div class="group flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
-              <button
-                class="flex-1 flex items-center gap-2 text-left"
-                onClick={() => props.onNavigateToFolder(folder, index())}
-              >
-                <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
-                <span class="text-[var(--color-text-primary)]">{folder.name}</span>
-              </button>
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Show
+              when={showDeleteConfirm() !== index()}
+              fallback={
+                <div class="p-2 rounded bg-[var(--color-bg-hover)] border border-[var(--color-accent)]">
+                  <div class="flex flex-col gap-2">
+                    <span class="text-xs text-[var(--color-text-primary)] text-center">
+                      Delete "{folder.name}"?
+                    </span>
+                    <div class="flex gap-2 justify-center">
+                      <button
+                        onClick={(e) => handleConfirmDelete(e, index())}
+                        class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={handleCancelDelete}
+                        class="px-3 py-1 text-xs bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded hover:bg-[var(--color-border)] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            >
+              <div class="group flex items-center gap-2 p-2 rounded hover:bg-[var(--color-bg-hover)] transition-colors">
                 <button
-                  onClick={() => props.onEdit(folder, index())}
-                  class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
-                  title="Edit"
+                  class="flex-1 flex items-center gap-2 text-left"
+                  onClick={() => props.onNavigateToFolder(folder, index())}
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                   </svg>
+                  <span class="text-[var(--color-text-primary)]">{folder.name}</span>
                 </button>
-                <button
-                  onClick={() => props.onDelete(index())}
-                  class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
-                  title="Delete"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => props.onEdit(folder, index())}
+                    class="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors"
+                    title="Edit"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteClick(e, index())}
+                    class="p-1 text-[var(--color-text-secondary)] hover:text-red-500 transition-colors"
+                    title="Delete"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
+            </Show>
           )}
         </For>
       </div>

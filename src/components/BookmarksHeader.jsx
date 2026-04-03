@@ -35,6 +35,28 @@ export default function BookmarksHeader(props) {
         
         <Show when={!props.loading && props.configured}>
           <div class="flex items-center gap-2 w-full sm:w-auto">
+            {/* Import/Export buttons */}
+            <button
+              onClick={props.onImport}
+              class="px-3 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors text-sm whitespace-nowrap"
+              title="Import bookmarks from HTML file"
+            >
+              <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Import
+            </button>
+            <button
+              onClick={props.onExport}
+              class="px-3 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-bg-hover)] transition-colors text-sm whitespace-nowrap"
+              title="Export bookmarks to HTML file"
+            >
+              <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              </svg>
+              Export
+            </button>
+            
             <div class="relative flex-1 sm:flex-none">
               <input
                 type="text"

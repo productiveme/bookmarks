@@ -4,6 +4,7 @@ import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkTile(props) {
   const [showDeleteConfirm, setShowDeleteConfirm] = createSignal(false);
+  const [copied, setCopied] = createSignal(false);
 
   const handleEdit = (e) => {
     e.preventDefault();
@@ -34,6 +35,21 @@ export default function BookmarkTile(props) {
     e.stopPropagation();
     props.onDragStart?.(e);
   };
+
+  const handleCopyBookmarklet = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(props.bookmark.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy bookmarklet:', err);
+      alert('Failed to copy to clipboard');
+    }
+  };
+
+  const isBookmarklet = () => props.bookmark.type === 'bookmarklet';
 
   return (
     <Show
@@ -74,15 +90,24 @@ export default function BookmarkTile(props) {
         onDragEnd={props.onDragEnd}
       >
         <div class="flex items-start justify-between mb-2">
-          <FaviconImage 
-            url={props.bookmark.url}
-            class="w-5 h-5 flex-shrink-0"
-            fallbackIcon={
-              <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+          <Show
+            when={!isBookmarklet()}
+            fallback={
+              <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center bg-[var(--color-accent)] text-white rounded text-xs font-bold">
+                JS
+              </div>
             }
-          />
+          >
+            <FaviconImage 
+              url={props.bookmark.url}
+              class="w-5 h-5 flex-shrink-0"
+              fallbackIcon={
+                <svg class="w-5 h-5 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              }
+            />
+          </Show>
           <div class="flex gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
             <button
               onClick={handleEdit}
@@ -104,15 +129,47 @@ export default function BookmarkTile(props) {
             </button>
           </div>
         </div>
-        <a
-          href={props.bookmark.url}
-          class="block"
+        <Show
+          when={!isBookmarklet()}
+          fallback={
+            <div class="block cursor-default">
+              <div class="flex items-start gap-2 mb-2">
+                <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{props.bookmark.name}</h3>
+              </div>
+              <p class="text-xs text-[var(--color-text-secondary)] mb-3 line-clamp-2 font-mono">{props.bookmark.url.substring(0, 100)}{props.bookmark.url.length > 100 ? '...' : ''}</p>
+              <button
+                onClick={handleCopyBookmarklet}
+                class="w-full px-3 py-2 bg-[var(--color-accent)] text-white rounded hover:bg-[var(--color-accent-hover)] transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Show when={copied()} fallback={
+                  <>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy Code
+                  </>
+                }>
+                  <>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Copied!
+                  </>
+                </Show>
+              </button>
+            </div>
+          }
         >
-          <div class="flex items-start gap-2 mb-1">
-            <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{props.bookmark.name}</h3>
-          </div>
-          <p class="text-xs text-[var(--color-text-secondary)] truncate">{props.bookmark.url}</p>
-        </a>
+          <a
+            href={props.bookmark.url}
+            class="block"
+          >
+            <div class="flex items-start gap-2 mb-1">
+              <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{props.bookmark.name}</h3>
+            </div>
+            <p class="text-xs text-[var(--color-text-secondary)] truncate">{props.bookmark.url}</p>
+          </a>
+        </Show>
       </div>
     </Show>
   );

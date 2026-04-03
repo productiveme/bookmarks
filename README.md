@@ -12,6 +12,7 @@ A minimal, lightweight bookmark manager that runs as a bookmarklet and stores bo
 - 🎯 **Drag & Drop**: Reorder bookmarks and move them between folders (full manager)
 - 🖱️ **Drag to Scroll**: Horizontal mouse-drag scrolling in the compact bar
 - 🔄 **GitHub Gist Sync**: Your bookmarks are stored in a private GitHub Gist
+- 📥 **Import/Export**: Import Netscape bookmark HTML files, export to HTML or YAML
 - 🌓 **Light/Dark Theme**: Automatically follows system preferences
 - 🔒 **Privacy-focused**: Data stored in your own GitHub Gist, no backend database
 - 🎨 **Minimal Design**: Clean, unobtrusive 40px height interface
@@ -344,13 +345,15 @@ All core features are now implemented:
 - ✅ **Parent folder navigation** - ".." folder in sidebar to go up one level
 - ✅ **Optimistic updates** - UI updates immediately, syncs to Gist in background
 - ✅ **Bookmark icons/favicons** - Async update in the background and caching
+- ✅ **Import/Export** - Import Netscape bookmark HTML files, export to HTML or YAML
       
 ## Future Enhancements
 
 Potential features to add:
 
-- [ ] Import from browser bookmarks
-- [ ] Export bookmarks to HTML/JSON
+- [ ] Browser extension for easier access
+- [ ] Bookmark tags and filtering
+- [ ] Bookmark sharing
 
 ## License
 
