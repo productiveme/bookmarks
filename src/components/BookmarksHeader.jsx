@@ -17,10 +17,18 @@ export default function BookmarksHeader(props) {
   
   // Handle keyboard shortcuts
   const handleKeyDown = (e) => {
-    // Focus search input when pressing "/"
-    if (e.key === '/' && searchInputRef && document.activeElement !== searchInputRef) {
-      e.preventDefault();
-      searchInputRef.focus();
+    // Focus search input when pressing "/", but only when no input is focused
+    if (e.key === '/') {
+      const active = document.activeElement;
+      const isInputFocused = active && (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.isContentEditable
+      );
+      if (!isInputFocused && searchInputRef) {
+        e.preventDefault();
+        searchInputRef.focus();
+      }
     }
   };
   
