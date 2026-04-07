@@ -36,6 +36,27 @@ export default function BookmarkTile(props) {
     props.onDragStart?.(e);
   };
 
+  const handleTileClick = (e) => {
+    // Don't navigate if dragging, editing buttons were clicked, or it's a bookmarklet
+    if (props.isDragging) return;
+    if (isBookmarklet()) return;
+    const url = props.bookmark.url;
+    if (!url) return;
+    if (e.metaKey || e.ctrlKey) {
+      window.open(url, '_blank');
+      return;
+    }
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.location.href = url;
+      } else {
+        window.location.href = url;
+      }
+    } catch (error) {
+      window.open(url, '_blank');
+    }
+  };
+
   const handleCopyBookmarklet = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -79,13 +100,14 @@ export default function BookmarkTile(props) {
       }
     >
       <div 
-        class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-move"
+        class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer"
         classList={{
           'opacity-50': props.isDragging,
-          'cursor-grab': props.draggable,
+          'cursor-grab': props.draggable && !props.isDragging,
           'cursor-grabbing': props.isDragging,
         }}
         draggable={props.draggable}
+        onClick={handleTileClick}
         onDragStart={handleDragStart}
         onDragEnd={props.onDragEnd}
       >
@@ -160,15 +182,12 @@ export default function BookmarkTile(props) {
             </div>
           }
         >
-          <a
-            href={props.bookmark.url}
-            class="block"
-          >
+          <div class="block">
             <div class="flex items-start gap-2 mb-1">
               <h3 class="font-medium text-[var(--color-text-primary)] line-clamp-2 flex-1">{props.bookmark.name}</h3>
             </div>
             <p class="text-xs text-[var(--color-text-secondary)] truncate">{props.bookmark.url}</p>
-          </a>
+          </div>
         </Show>
       </div>
     </Show>
