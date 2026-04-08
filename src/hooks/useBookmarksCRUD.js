@@ -156,8 +156,9 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
               target = target[idx].children;
             }
           }
+          const isBookmarklet = editedData.url?.trim().startsWith('javascript:');
           target.push({
-            type: 'link',
+            type: isBookmarklet ? 'bookmarklet' : 'link',
             name: editedData.name,
             url: editedData.url
           });
@@ -168,10 +169,12 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
             current = current[currentItemPath[i]].children;
           }
           
+          const isBookmarklet = editedData.url?.trim().startsWith('javascript:');
           current[currentItemPath[currentItemPath.length - 1]] = {
             ...item,
             name: editedData.name,
-            url: editedData.url
+            url: editedData.url,
+            type: isBookmarklet ? 'bookmarklet' : 'link',
           };
         }
         

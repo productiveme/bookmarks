@@ -51,9 +51,7 @@ export function useBookmarkBarSearch(bookmarks, currentBookmarks) {
   };
 
   const displayBookmarks = () => {
-    const bookmarksToDisplay = searchQuery().trim() ? filteredBookmarks() : currentBookmarks();
-    // Filter out bookmarklets - they should only appear in the manager, not the bar
-    return bookmarksToDisplay.filter(item => item.type !== 'bookmarklet');
+    return searchQuery().trim() ? filteredBookmarks() : currentBookmarks();
   };
 
   return {

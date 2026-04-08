@@ -156,8 +156,9 @@ export default function BookmarksFullPage() {
         }
       }
       
+      const isBookmarklet = bookmarkData.url.trim().startsWith('javascript:');
       target.push({
-        type: 'link',
+        type: isBookmarklet ? 'bookmarklet' : 'link',
         name: bookmarkData.name,
         url: bookmarkData.url
       });

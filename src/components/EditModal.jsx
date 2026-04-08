@@ -1,5 +1,5 @@
 // EditModal - Modal for editing folders and bookmarks
-import { createSignal, createEffect, Show, For } from "solid-js";
+import { createSignal, createEffect, createMemo, Show, For } from "solid-js";
 
 export default function EditModal(props) {
   const [name, setName] = createSignal("");
@@ -14,6 +14,8 @@ export default function EditModal(props) {
       setSelectedFolder(props.currentFolderPath || []);
     }
   });
+
+  const isBookmarkletUrl = createMemo(() => url().trim().startsWith('javascript:'));
 
   const handleSave = () => {
     props.onSave({
@@ -58,7 +60,7 @@ export default function EditModal(props) {
           onClick={handleModalClick}
         >
           <h2 class="text-xl font-bold text-[var(--color-text-primary)] mb-4">
-            {props.isFolder ? "Edit Folder" : (props.item?.type === 'bookmarklet' ? "Edit Bookmarklet" : "Edit Bookmark")}
+            {props.isFolder ? "Edit Folder" : (isBookmarkletUrl() ? "Edit Bookmarklet" : "Edit Bookmark")}
           </h2>
 
           <div class="space-y-4">
@@ -77,34 +79,21 @@ export default function EditModal(props) {
               />
             </div>
 
-            <Show when={!props.isFolder && props.item?.type === 'bookmarklet'}>
+            <Show when={!props.isFolder}>
               <div>
-                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
-                  Code (read-only)
+                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase flex items-center gap-2">
+                  {isBookmarkletUrl() ? "Code" : "Url"}
+                  <Show when={isBookmarkletUrl()}>
+                    <span class="inline-flex items-center justify-center bg-yellow-400 text-black rounded-sm text-[9px] font-bold leading-none px-1 py-0.5 select-none">JS</span>
+                  </Show>
                 </label>
                 <textarea
                   value={url()}
-                  readonly
-                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] font-mono text-xs resize-none opacity-75 cursor-not-allowed"
-                  rows="4"
-                />
-                <p class="text-xs text-[var(--color-text-secondary)] mt-1">
-                  Bookmarklet code cannot be edited. Use the copy button to copy it.
-                </p>
-              </div>
-            </Show>
-
-            <Show when={!props.isFolder && props.item?.type !== 'bookmarklet'}>
-              <div>
-                <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1 lowercase">
-                  Url
-                </label>
-                <input
-                  type="url"
-                  value={url()}
                   onInput={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  placeholder="https://example.com or javascript:..."
+                  class="w-full px-4 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono text-xs resize-none"
+                  classList={{ 'text-[var(--color-text-primary)]': true }}
+                  rows={isBookmarkletUrl() ? 4 : 1}
                   autocapitalize="none"
                   autocorrect="off"
                   spellcheck="false"
