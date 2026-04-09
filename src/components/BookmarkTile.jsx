@@ -1,5 +1,5 @@
 // BookmarkTile - Individual bookmark tile in grid view
-import { Show, createSignal } from 'solid-js';
+import { Show, createSignal, Dynamic } from 'solid-js';
 import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkTile(props) {
@@ -35,28 +35,6 @@ export default function BookmarkTile(props) {
     e.stopPropagation();
     props.onDragStart?.(e);
   };
-
-  const handleTileClick = (e) => {
-    // Don't navigate if dragging, editing buttons were clicked, or it's a bookmarklet
-    if (props.isDragging) return;
-    if (isBookmarklet()) return;
-    const url = props.bookmark.url;
-    if (!url) return;
-    if (e.metaKey || e.ctrlKey) {
-      window.open(url, '_blank');
-      return;
-    }
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.location.href = url;
-      } else {
-        window.location.href = url;
-      }
-    } catch (error) {
-      window.open(url, '_blank');
-    }
-  };
-
   const handleCopyBookmarklet = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -99,15 +77,16 @@ export default function BookmarkTile(props) {
         </div>
       }
     >
-      <div 
-        class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer"
+      <Dynamic
+        component={isBookmarklet() ? 'div' : 'a'}
+        href={isBookmarklet() ? undefined : props.bookmark.url}
+        class="group bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer block no-underline"
         classList={{
           'opacity-50': props.isDragging,
           'cursor-grab': props.draggable && !props.isDragging,
           'cursor-grabbing': props.isDragging,
         }}
         draggable={props.draggable}
-        onClick={handleTileClick}
         onDragStart={handleDragStart}
         onDragEnd={props.onDragEnd}
       >
@@ -199,7 +178,7 @@ export default function BookmarkTile(props) {
             <p class="text-xs text-[var(--color-text-secondary)] truncate">{props.bookmark.url}</p>
           </div>
         </Show>
-      </div>
+      </Dynamic>
     </Show>
   );
 }
