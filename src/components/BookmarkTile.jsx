@@ -1,5 +1,6 @@
 // BookmarkTile - Individual bookmark tile in grid view
-import { Show, createSignal, Dynamic } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import FaviconImage from './FaviconImage.jsx';
 
 export default function BookmarkTile(props) {
