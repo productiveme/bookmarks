@@ -1,13 +1,30 @@
 // useBookmarkBarNavigation - Hook for folder navigation and breadcrumb management in the bar
 import { createSignal } from 'solid-js';
+import { getLastPath, setLastPath } from '../utils/storage.js';
 
 export function useBookmarkBarNavigation(bookmarks, loadBookmarks) {
   const [currentPath, setCurrentPath] = createSignal([]);
   const [currentBookmarks, setCurrentBookmarks] = createSignal([]);
 
+  // Walk a saved path through a bookmarks tree, returning { path, items }.
+  // Stops early (at root) if any step is no longer valid.
+  const resolvePath = (rootItems, savedPath) => {
+    let current = rootItems;
+    const resolvedPath = [];
+    for (const step of savedPath) {
+      const folder = current[step.index];
+      if (!folder || folder.type !== 'folder') break;
+      resolvedPath.push({ name: folder.name, index: step.index });
+      current = folder.children || [];
+    }
+    return { path: resolvedPath, items: current };
+  };
+
   const navigateToFolder = (folder, index) => {
-    setCurrentPath([...currentPath(), { name: folder.name, index }]);
+    const newPath = [...currentPath(), { name: folder.name, index }];
+    setCurrentPath(newPath);
     setCurrentBookmarks(folder.children || []);
+    setLastPath(newPath);
   };
 
   // Find the full path to a folder in the bookmark tree
@@ -41,6 +58,7 @@ export function useBookmarkBarNavigation(bookmarks, loadBookmarks) {
       // Navigate to the folder using the full path
       setCurrentPath(path);
       setCurrentBookmarks(folder.children || []);
+      setLastPath(path);
     }
   };
 
@@ -51,6 +69,7 @@ export function useBookmarkBarNavigation(bookmarks, loadBookmarks) {
       if (parsed) {
         setCurrentPath([]);
         setCurrentBookmarks(parsed.bookmarks || []);
+        setLastPath([]);
       }
     } else {
       // Navigate to specific breadcrumb
@@ -66,6 +85,7 @@ export function useBookmarkBarNavigation(bookmarks, loadBookmarks) {
         }
       }
       setCurrentBookmarks(current);
+      setLastPath(newPath);
     }
   };
 
@@ -93,6 +113,18 @@ export function useBookmarkBarNavigation(bookmarks, loadBookmarks) {
     return data;
   };
 
+  // Restore last visited folder after initial bookmarks load
+  const restoreLastPath = (rootItems) => {
+    const saved = getLastPath();
+    if (!saved.length) {
+      setCurrentBookmarks(rootItems);
+      return;
+    }
+    const { path, items } = resolvePath(rootItems, saved);
+    setCurrentPath(path);
+    setCurrentBookmarks(items);
+  };
+
   return {
     currentPath,
     setCurrentPath,
@@ -103,5 +135,6 @@ export function useBookmarkBarNavigation(bookmarks, loadBookmarks) {
     navigateToBreadcrumb,
     updateUIAfterChange,
     addBookmarkToCurrentPath,
+    restoreLastPath,
   };
 }

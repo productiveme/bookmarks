@@ -38,6 +38,7 @@ export default function BookmarksFullPage() {
     navigateToBreadcrumb,
     handleFolderTileClick,
     handleNavigateUp,
+    restoreLastPath,
   } = useBookmarksNavigation(bookmarks, loadBookmarks);
 
   // Search
@@ -106,10 +107,10 @@ export default function BookmarksFullPage() {
   // Track if we've initialized the view
   const [viewInitialized, setViewInitialized] = createSignal(false);
   
-  // Watch for bookmarks to load and initialize the view (only at root)
+  // Watch for bookmarks to load and initialize the view
   createEffect(() => {
     if (!viewInitialized() && !loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
-      updateCurrentView(bookmarks().bookmarks, []);
+      restoreLastPath(bookmarks().bookmarks);
       setViewInitialized(true);
     }
   });

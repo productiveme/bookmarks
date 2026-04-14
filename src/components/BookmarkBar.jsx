@@ -30,12 +30,13 @@ export default function BookmarkBar(props) {
     navigateToBreadcrumb,
     updateUIAfterChange,
     addBookmarkToCurrentPath,
+    restoreLastPath,
   } = useBookmarkBarNavigation(bookmarks, loadBookmarks);
 
-  // Watch for bookmarks to load and initialize the view (only at root)
+  // Watch for bookmarks to load and initialize the view
   createEffect(() => {
     if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
-      setCurrentBookmarks(bookmarks().bookmarks);
+      restoreLastPath(bookmarks().bookmarks);
     }
   });
 

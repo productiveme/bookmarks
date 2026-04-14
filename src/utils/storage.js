@@ -3,7 +3,8 @@
 const STORAGE_KEYS = {
   GITHUB_TOKEN: 'bookmarks_githubToken',
   GIST_ID: 'bookmarks_gistId',
-  LAST_SYNC: 'bookmarks_lastSync'
+  LAST_SYNC: 'bookmarks_lastSync',
+  LAST_PATH: 'bookmarks_lastPath'
 };
 
 export function getGithubToken() {
@@ -34,6 +35,20 @@ export function getLastSync() {
 export function setLastSync(timestamp) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEYS.LAST_SYNC, timestamp);
+}
+
+export function getLastPath() {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_PATH)) || [];
+  } catch {
+    return [];
+  }
+}
+
+export function setLastPath(path) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEYS.LAST_PATH, JSON.stringify(path));
 }
 
 export function hasConfiguration() {

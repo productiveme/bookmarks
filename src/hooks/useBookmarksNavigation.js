@@ -1,5 +1,6 @@
 // useBookmarksNavigation - Hook for folder navigation and breadcrumb management
 import { createSignal } from 'solid-js';
+import { getLastPath, setLastPath } from '../utils/storage.js';
 
 export function useBookmarksNavigation(bookmarks, loadBookmarks) {
   const [currentPath, setCurrentPath] = createSignal([]);
@@ -16,12 +17,25 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
     setFolders(folderItems);
   };
 
+  // Walk a saved path through a bookmarks tree, returning { path, items }.
+  // Stops early (at root) if any step is no longer valid.
+  const resolvePath = (rootItems, savedPath) => {
+    let current = rootItems;
+    const resolvedPath = [];
+    for (const step of savedPath) {
+      const folder = current[step.index];
+      if (!folder || folder.type !== 'folder') break;
+      resolvedPath.push({ name: folder.name, index: step.index });
+      current = folder.children || [];
+    }
+    return { path: resolvedPath, items: current };
+  };
+
   const navigateToFolder = (folder, index) => {
     const newPath = [...currentPath(), { name: folder.name, index }];
-    setCurrentPath(newPath);
-    
     const children = folder.children || [];
     updateCurrentView(children, newPath);
+    setLastPath(newPath);
   };
 
   // Find the full path to a folder in the bookmark tree
@@ -55,6 +69,7 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
       // Navigate to the folder using the full path
       const children = folder.children || [];
       updateCurrentView(children, path);
+      setLastPath(path);
     }
   };
 
@@ -63,6 +78,7 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
       // Navigate to root - reload from Gist
       const rootBookmarks = await loadBookmarks();
       updateCurrentView(rootBookmarks, []);
+      setLastPath([]);
     } else {
       // Navigate to specific breadcrumb
       const newPath = currentPath().slice(0, targetIndex + 1);
@@ -75,6 +91,7 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
         }
       }
       updateCurrentView(current, newPath);
+      setLastPath(newPath);
     }
   };
 
@@ -87,6 +104,17 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
     await navigateToBreadcrumb(currentPath().length - 2);
   };
 
+  // Restore last visited folder after initial bookmarks load
+  const restoreLastPath = (rootItems) => {
+    const saved = getLastPath();
+    if (!saved.length) {
+      updateCurrentView(rootItems, []);
+      return;
+    }
+    const { path, items } = resolvePath(rootItems, saved);
+    updateCurrentView(items, path);
+  };
+
   return {
     currentPath,
     currentBookmarks,
@@ -97,5 +125,6 @@ export function useBookmarksNavigation(bookmarks, loadBookmarks) {
     navigateToBreadcrumb,
     handleFolderTileClick,
     handleNavigateUp,
+    restoreLastPath,
   };
 }
