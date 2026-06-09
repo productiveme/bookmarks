@@ -14,6 +14,7 @@ import BookmarkTile from './BookmarkTile.jsx';
 import FolderTile from './FolderTile.jsx';
 import EditModal from './EditModal.jsx';
 import AddBookmarkModal from './AddBookmarkModal.jsx';
+import AddFolderModal from './AddFolderModal.jsx';
 
 export default function BookmarksFullPage() {
   // Bookmarks data management
@@ -56,12 +57,17 @@ export default function BookmarksFullPage() {
     showEditModal,
     showAddModal,
     setShowAddModal,
+    showAddFolderModal,
+    folderNameInput,
+    setFolderNameInput,
     editingItem,
     handleDelete,
     handleEdit,
     handleSaveEdit,
     handleCancelEdit,
     handleAddFolder,
+    handleAddFolderModalSave,
+    handleCancelAddFolder,
     handleMoveUp,
     handleMoveDown,
   } = useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, updateCurrentView, saveBookmarks);
@@ -524,6 +530,15 @@ export default function BookmarksFullPage() {
         folderList={getFolderList(bookmarks())}
         onSave={handleSaveAdd}
         onCancel={handleCancelAdd}
+      />
+
+      {/* Add Folder Modal */}
+      <AddFolderModal
+        show={showAddFolderModal()}
+        name={folderNameInput}
+        setName={setFolderNameInput}
+        onSave={handleAddFolderModalSave}
+        onCancel={handleCancelAddFolder}
       />
     </div>
   );
