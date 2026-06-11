@@ -14,9 +14,10 @@ const bookmarkletCode = generateBookmarklet(appUrl);
         <h1 class="text-4xl font-bold text-[var(--color-text-primary)]">
           Bookmarks Bar
         </h1>
-        <a 
-          href="https://github.com/productiveme/bookmarks" 
+        <a
+          href="https://github.com/productiveme/bookmarks"
           target="_blank"
+          rel="noopener noreferrer"
           class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
           title="View on GitHub"
         >
@@ -40,7 +41,7 @@ const bookmarkletCode = generateBookmarklet(appUrl);
             <div>
               <strong>Create a GitHub Personal Access Token</strong>
               <p class="text-sm text-[var(--color-text-secondary)] mt-1">
-                Go to <a href="https://github.com/settings/tokens" target="_blank" class="text-[var(--color-accent)] hover:underline">github.com/settings/tokens</a> and create a token with <code class="bg-[var(--color-bg-secondary)] px-1 py-0.5 rounded">gist</code> scope
+                Go to <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:underline">github.com/settings/tokens</a> and create a token with <code class="bg-[var(--color-bg-secondary)] px-1 py-0.5 rounded">gist</code> scope
               </p>
             </div>
           </li>
@@ -50,7 +51,7 @@ const bookmarkletCode = generateBookmarklet(appUrl);
             <div>
               <strong>Configure your bookmarks</strong>
               <p class="text-sm text-[var(--color-text-secondary)] mt-1">
-                <a href="/setup" target="_blank" class="text-[var(--color-accent)] hover:underline">Click here to set up</a> your GitHub token and create a new Gist
+                <a href="/setup" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:underline">Click here to set up</a> your GitHub token and create a new Gist
               </p>
             </div>
           </li>

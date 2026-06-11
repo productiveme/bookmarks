@@ -341,6 +341,7 @@ export default function BookmarksFullPage() {
               <a
                 href="/setup"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="inline-block px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
               >
                 Go to Setup
