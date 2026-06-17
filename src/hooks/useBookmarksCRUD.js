@@ -6,6 +6,8 @@ import { clearFaviconCache } from '../components/FaviconImage.jsx';
 export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, updateCurrentView, saveBookmarks) {
   const [showEditModal, setShowEditModal] = createSignal(false);
   const [showAddModal, setShowAddModal] = createSignal(false);
+  const [showAddFolderModal, setShowAddFolderModal] = createSignal(false);
+  const [folderNameInput, setFolderNameInput] = createSignal('');
   const [editingItem, setEditingItem] = createSignal(null);
 
   const handleDelete = async (index, isFolder) => {
@@ -205,9 +207,18 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
     setEditingItem(null);
   };
 
-  const handleAddFolder = async () => {
-    const name = prompt('Enter folder name:');
-    if (!name || !name.trim()) return;
+  const handleAddFolder = () => {
+    setFolderNameInput('');
+    setShowAddFolderModal(true);
+  };
+
+  const handleCancelAddFolder = () => {
+    setShowAddFolderModal(false);
+    setFolderNameInput('');
+  };
+
+  const handleAddFolderModalSave = async (name) => {
+    if (!name.trim()) return;
 
     try {
       const data = JSON.parse(JSON.stringify(bookmarks()));
@@ -238,6 +249,9 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
         }
       }
       updateCurrentView(viewCurrent, currentPath());
+      
+      setShowAddFolderModal(false);
+      setFolderNameInput('');
       
       await saveBookmarks(data);
     } catch (err) {
@@ -331,12 +345,17 @@ export function useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, 
     showEditModal,
     showAddModal,
     setShowAddModal,
+    showAddFolderModal,
+    folderNameInput,
+    setFolderNameInput,
     editingItem,
     handleDelete,
     handleEdit,
     handleSaveEdit,
     handleCancelEdit,
     handleAddFolder,
+    handleAddFolderModalSave,
+    handleCancelAddFolder,
     handleMoveUp,
     handleMoveDown,
   };

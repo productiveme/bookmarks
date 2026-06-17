@@ -30,12 +30,13 @@ export default function BookmarkBar(props) {
     navigateToBreadcrumb,
     updateUIAfterChange,
     addBookmarkToCurrentPath,
+    restoreLastPath,
   } = useBookmarkBarNavigation(bookmarks, loadBookmarks);
 
-  // Watch for bookmarks to load and initialize the view (only at root)
+  // Watch for bookmarks to load and initialize the view
   createEffect(() => {
     if (!loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
-      setCurrentBookmarks(bookmarks().bookmarks);
+      restoreLastPath(bookmarks().bookmarks);
     }
   });
 
@@ -113,7 +114,7 @@ export default function BookmarkBar(props) {
           <span>Please configure your GitHub token and Gist ID</span>
           <button
             class="text-[var(--color-accent)] hover:underline"
-            onClick={() => window.open('/setup', '_blank', 'width=600,height=700')}
+            onClick={() => window.open('/setup', '_blank', 'width=600,height=700,noopener')}
           >
             Setup
           </button>

@@ -155,7 +155,7 @@ export default function ConfigModal() {
               autocomplete="current-password"
             />
             <p class="text-xs text-[var(--color-text-secondary)] mt-1">
-              Create a token at <a href="https://github.com/settings/tokens" target="_blank" class="text-[var(--color-accent)] hover:underline">github.com/settings/tokens</a> with "gist" scope
+              Create a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:underline">github.com/settings/tokens</a> with "gist" scope
             </p>
           </div>
         </div>

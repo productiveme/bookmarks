@@ -122,7 +122,7 @@ export default function BookmarkItem(props) {
     
     // Check for modifier keys - open in new tab
     if (e.metaKey || e.ctrlKey) {
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener');
       return;
     }
     
@@ -136,7 +136,7 @@ export default function BookmarkItem(props) {
     } catch (error) {
       // If blocked, open in new tab
       console.warn('Navigation blocked, opening in new tab:', error);
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener');
     }
   };
   

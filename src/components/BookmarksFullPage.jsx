@@ -14,6 +14,7 @@ import BookmarkTile from './BookmarkTile.jsx';
 import FolderTile from './FolderTile.jsx';
 import EditModal from './EditModal.jsx';
 import AddBookmarkModal from './AddBookmarkModal.jsx';
+import AddFolderModal from './AddFolderModal.jsx';
 
 export default function BookmarksFullPage() {
   // Bookmarks data management
@@ -38,6 +39,7 @@ export default function BookmarksFullPage() {
     navigateToBreadcrumb,
     handleFolderTileClick,
     handleNavigateUp,
+    restoreLastPath,
   } = useBookmarksNavigation(bookmarks, loadBookmarks);
 
   // Search
@@ -55,12 +57,17 @@ export default function BookmarksFullPage() {
     showEditModal,
     showAddModal,
     setShowAddModal,
+    showAddFolderModal,
+    folderNameInput,
+    setFolderNameInput,
     editingItem,
     handleDelete,
     handleEdit,
     handleSaveEdit,
     handleCancelEdit,
     handleAddFolder,
+    handleAddFolderModalSave,
+    handleCancelAddFolder,
     handleMoveUp,
     handleMoveDown,
   } = useBookmarksCRUD(bookmarks, setBookmarks, currentPath, folders, updateCurrentView, saveBookmarks);
@@ -106,10 +113,10 @@ export default function BookmarksFullPage() {
   // Track if we've initialized the view
   const [viewInitialized, setViewInitialized] = createSignal(false);
   
-  // Watch for bookmarks to load and initialize the view (only at root)
+  // Watch for bookmarks to load and initialize the view
   createEffect(() => {
     if (!viewInitialized() && !loading() && configured() && bookmarks().bookmarks && currentBookmarks().length === 0 && currentPath().length === 0) {
-      updateCurrentView(bookmarks().bookmarks, []);
+      restoreLastPath(bookmarks().bookmarks);
       setViewInitialized(true);
     }
   });
@@ -334,6 +341,7 @@ export default function BookmarksFullPage() {
               <a
                 href="/setup"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="inline-block px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
               >
                 Go to Setup
@@ -523,6 +531,15 @@ export default function BookmarksFullPage() {
         folderList={getFolderList(bookmarks())}
         onSave={handleSaveAdd}
         onCancel={handleCancelAdd}
+      />
+
+      {/* Add Folder Modal */}
+      <AddFolderModal
+        show={showAddFolderModal()}
+        name={folderNameInput}
+        setName={setFolderNameInput}
+        onSave={handleAddFolderModalSave}
+        onCancel={handleCancelAddFolder}
       />
     </div>
   );
