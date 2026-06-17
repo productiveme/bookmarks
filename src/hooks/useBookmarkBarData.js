@@ -55,7 +55,6 @@ export function useBookmarkBarData() {
 
   onMount(() => {
     // Check configuration on mount (client-side only)
-    // Add a small delay to ensure localStorage is fully accessible in iframe context
     const checkConfig = () => {
       const token = getGithubToken();
       const gistId = getGistId();
@@ -65,20 +64,22 @@ export function useBookmarkBarData() {
       console.log('Token:', token ? 'exists' : 'missing');
       console.log('GistId:', gistId ? 'exists' : 'missing');
       
-      setConfigured(isConfigured);
+      if (isConfigured !== configured()) {
+        setConfigured(isConfigured);
+      }
       
-      if (isConfigured) {
+      if (isConfigured && loading()) {
         loadBookmarks();
-      } else {
+      } else if (!isConfigured) {
         setLoading(false);
       }
     };
     
-    // Check immediately
+    // Check immediately and after short delays
     checkConfig();
-    
-    // Also check after a short delay in case localStorage wasn't ready
     setTimeout(checkConfig, 200);
+    setTimeout(checkConfig, 1000);
+    setTimeout(checkConfig, 3000);
   });
 
   return {

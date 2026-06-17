@@ -117,7 +117,15 @@ export default function BookmarkBar(props) {
           >
             Setup
           </button>
-          <span class="text-xs text-[var(--color-text-secondary)]">(After saving, close the setup window)</span>
+          <span class="text-xs text-[var(--color-text-secondary)]">(After saving, close setup window)</span>
+          <span class="text-xs">|</span>
+          <button
+            class="text-[var(--color-accent)] hover:underline text-xs"
+            onClick={() => window.location.reload()}
+            title="Reload after saving config"
+          >
+            ↻ Reload
+          </button>
         </div>
       </Show>
       

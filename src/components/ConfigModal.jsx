@@ -36,43 +36,36 @@ export default function ConfigModal() {
     
     try {
       // Check if using test credentials
-      if (token() === 'test' && gistId() === 'test') {
-        // Test mode - skip API verification
-        setGithubToken(token());
-        setGistId(gistId());
-        
-        // Broadcast to iframes
-        window.opener?.postMessage({
+      // Save to localStorage in this context
+      setGithubToken(token());
+      setGistId(gistId());
+
+      // Broadcast to bar iframes via postMessage (works when window.opener is available)
+      window.opener?.postMessage({
+        type: 'save-config',
+        token: token(),
+        gistId: gistId()
+      }, '*');
+
+      // Broadcast via BroadcastChannel as reliable fallback (same-origin, not affected by opener restrictions)
+      try {
+        const channel = new BroadcastChannel('bookmarks-config');
+        channel.postMessage({
           type: 'save-config',
           token: token(),
           gistId: gistId()
-        }, '*');
-        
+        });
+        channel.close();
+      } catch (e) {
+        console.log('BroadcastChannel not available:', e);
+      }
+
+      if (token() === 'test' && gistId() === 'test') {
         setSuccess(true);
         setError('Test mode enabled! All data will be stored in localStorage.');
       } else {
-        // Normal mode - verify access to the gist
-        const response = await fetch(`/api/bookmarks?token=${encodeURIComponent(token())}&gistId=${encodeURIComponent(gistId())}`);
-        const data = await response.json();
-        
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        
-        // Save to localStorage in this context (for when setup is opened directly)
-        setGithubToken(token());
-        setGistId(gistId());
-        
-        // IMPORTANT: Also broadcast to all iframes that might be listening
-        // This allows iframe's partitioned storage to receive the config
-        window.opener?.postMessage({
-          type: 'save-config',
-          token: token(),
-          gistId: gistId()
-        }, '*');
-        
         setSuccess(true);
-        setError('Configuration saved! You can close this tab and click "Reload" in the bookmarks bar.');
+        setError('Configuration saved! You can close this setup window. If bookmarks still don\'t load, click "↻ Reload" on the bar.');
       }
       
     } catch (err) {

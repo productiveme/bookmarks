@@ -13,10 +13,18 @@ import '../styles/global.css';
     // Import storage functions
     import { setGithubToken, setGistId } from '../utils/storage.js';
     
-    // Handle messages from bookmarklet and setup window
+    // Helper to save config and reload
+    function applyConfig(token, gistId) {
+      console.log('Received config, saving to partitioned storage...');
+      setGithubToken(token);
+      setGistId(gistId);
+      console.log('Config saved! Reloading...');
+      window.location.reload();
+    }
+
+    // Listen for config from setup popup via postMessage
     window.addEventListener('message', (event) => {
       if (event.data.type === 'get-page-info') {
-        // This will be called by the bar to get current page details
         window.parent.postMessage({
           type: 'page-info-response',
           title: event.data.title,
@@ -25,26 +33,31 @@ import '../styles/global.css';
       }
       
       if (event.data.type === 'page-info') {
-        // Forward to component
         window.dispatchEvent(new CustomEvent('page-info-received', { 
           detail: event.data 
         }));
       }
       
-      // Save config from setup window (CRITICAL for partitioned storage)
       if (event.data.type === 'save-config') {
-        console.log('Received config from setup window, saving to partitioned storage...');
-        setGithubToken(event.data.token);
-        setGistId(event.data.gistId);
-        console.log('Config saved! Reloading...');
-        window.location.reload();
+        applyConfig(event.data.token, event.data.gistId);
       }
       
-      // Reload when config is saved (legacy)
       if (event.data.type === 'config-saved') {
         window.location.reload();
       }
     });
+
+    // Listen for config via BroadcastChannel (reliable fallback for same-origin comms)
+    try {
+      const channel = new BroadcastChannel('bookmarks-config');
+      channel.addEventListener('message', (event) => {
+        if (event.data.type === 'save-config') {
+          applyConfig(event.data.token, event.data.gistId);
+        }
+      });
+    } catch (e) {
+      console.log('BroadcastChannel not available:', e);
+    }
     
     // Provide function to get current page info from parent
     if (typeof window !== 'undefined') {
