@@ -18,6 +18,18 @@ export default function ConfigModal() {
     if (existingGistId) setGistIdLocal(existingGistId);
   });
   
+  // Broadcast config to bar iframes via postMessage and BroadcastChannel
+  const broadcastConfig = (token, gistId) => {
+    window.opener?.postMessage({ type: 'save-config', token, gistId }, '*');
+    try {
+      const channel = new BroadcastChannel('bookmarks-config');
+      channel.postMessage({ type: 'save-config', token, gistId });
+      channel.close();
+    } catch (e) {
+      console.log('BroadcastChannel not available:', e);
+    }
+  };
+
   const handleSave = async () => {
     setError('');
     setSuccess(false);
@@ -35,39 +47,33 @@ export default function ConfigModal() {
     setLoading(true);
     
     try {
-      // Check if using test credentials
-      // Save to localStorage in this context
-      setGithubToken(token());
-      setGistId(gistId());
-
-      // Broadcast to bar iframes via postMessage (works when window.opener is available)
-      window.opener?.postMessage({
-        type: 'save-config',
-        token: token(),
-        gistId: gistId()
-      }, '*');
-
-      // Broadcast via BroadcastChannel as reliable fallback (same-origin, not affected by opener restrictions)
-      try {
-        const channel = new BroadcastChannel('bookmarks-config');
-        channel.postMessage({
-          type: 'save-config',
-          token: token(),
-          gistId: gistId()
-        });
-        channel.close();
-      } catch (e) {
-        console.log('BroadcastChannel not available:', e);
-      }
-
       if (token() === 'test' && gistId() === 'test') {
+        // Test mode - skip API verification
+        setGithubToken(token());
+        setGistId(gistId());
+        
+        broadcastConfig(token(), gistId());
+        
         setSuccess(true);
         setError('Test mode enabled! All data will be stored in localStorage.');
       } else {
+        // Normal mode - verify access to the gist
+        const response = await fetch(`/api/bookmarks?token=${encodeURIComponent(token())}&gistId=${encodeURIComponent(gistId())}`);
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        // Save to localStorage in this context
+        setGithubToken(token());
+        setGistId(gistId());
+        
+        broadcastConfig(token(), gistId());
+        
         setSuccess(true);
         setError('Configuration saved! You can close this setup window. If bookmarks still don\'t load, click "↻ Reload" on the bar.');
       }
-      
     } catch (err) {
       setError(err.message || 'Failed to verify access to Gist');
     } finally {

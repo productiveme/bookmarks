@@ -75,9 +75,9 @@ export default function BookmarksHeader(props) {
             </button>
           </Show>
           <Show when={!props.loading && !props.configured}>
-            <a href="/setup" target="_blank" rel="noopener noreferrer" class="text-sm text-[var(--color-accent)] hover:underline">
+            <button onClick={() => window.open('/setup', '_blank', 'width=600,height=700')} class="text-sm text-[var(--color-accent)] hover:underline">
               Setup Required
-            </a>
+            </button>
           </Show>
         </div>
         

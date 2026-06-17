@@ -6,4 +6,16 @@ import '../styles/global.css';
 
 <Layout title="Bookmarks Manager">
   <BookmarksFullPage client:only="solid-js" />
+  
+  <script>
+    import { setGithubToken, setGistId } from '../utils/storage.js';
+    
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'save-config') {
+        setGithubToken(event.data.token);
+        setGistId(event.data.gistId);
+        window.location.reload();
+      }
+    });
+  </script>
 </Layout>

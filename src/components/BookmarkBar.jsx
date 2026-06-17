@@ -114,7 +114,22 @@ export default function BookmarkBar(props) {
           <span>Please configure your GitHub token and Gist ID</span>
           <button
             class="text-[var(--color-accent)] hover:underline"
-            onClick={() => window.open('/setup', '_blank', 'width=600,height=700,noopener')}
+            onClick={() => {
+              // Open setup window synchronously (must happen during user gesture)
+              const setupWindow = window.open('/setup', '_blank', 'width=600,height=700');
+              // Request unpartitioned storage access in the background
+              const req = document.requestStorageAccess ? document.requestStorageAccess().catch(() => {}) : Promise.resolve();
+              req.then(() => {
+                if (setupWindow) {
+                  const poll = setInterval(() => {
+                    if (setupWindow.closed) {
+                      clearInterval(poll);
+                      window.location.reload();
+                    }
+                  }, 500);
+                }
+              });
+            }}
           >
             Setup
           </button>

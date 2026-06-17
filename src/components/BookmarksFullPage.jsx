@@ -338,14 +338,12 @@ export default function BookmarksFullPage() {
               <p class="text-[var(--color-text-secondary)] mb-6">
                 To get started, you need to configure your GitHub token and Gist ID.
               </p>
-              <a
-                href="/setup"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => window.open('/setup', '_blank', 'width=600,height=700')}
                 class="inline-block px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors font-medium"
               >
                 Go to Setup
-              </a>
+              </button>
             </div>
           </div>
         </Show>
